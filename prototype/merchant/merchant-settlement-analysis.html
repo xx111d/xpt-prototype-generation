@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商家端 - 结算分析</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>if(typeof echarts==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"><\/script>');}</script>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="layout">
+  <div id="sidebar-container"></div>
+
+  <div class="main">
+    <div id="header-container"></div>
+
+    <div class="content">
+      <!-- Toolbar: Time Pills + Custom Date Range -->
+      <div class="toolbar">
+        <div class="time-pills">
+          <div class="time-pill" data-range="week" onclick="selectPill(this)">近七天</div>
+          <div class="time-pill" data-range="month" onclick="selectPill(this)">本月</div>
+          <div class="time-pill active" data-range="quarter" onclick="selectPill(this)">本季度</div>
+          <div class="time-pill" data-range="custom" onclick="selectPill(this)">自定义</div>
+        </div>
+        <div class="date-range" id="customDateWrap" style="display:none;">
+          <input type="date" id="dateStart" value="2026-01-01">
+          <span style="color:#9ca3af">~</span>
+          <input type="date" id="dateEnd" value="2026-06-30">
+          <button class="btn-apply" onclick="refresh()">查 询</button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card blue">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">应收金额</div>
+              <div class="kpi-value" id="kv-t3recv">¥1,280,000</div>
+            </div>
+            <div class="kpi-icon">📄</div>
+          </div>
+          <div class="kpi-sub" id="ks-t3recv">本季度</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">回款金额</div>
+              <div class="kpi-value" id="kv-t3paid">¥1,144,320</div>
+              <div class="kpi-change up" id="kc-t3paid">↑ 8.5%</div>
+            </div>
+            <div class="kpi-icon">💵</div>
+          </div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">资金回款率</div>
+              <div class="kpi-value" id="kv-t3rate">89.4%</div>
+              <div class="kpi-change up" id="kc-t3rate">↑ 3.2%<span class="muted">较上月</span></div>
+            </div>
+            <div class="kpi-icon">📊</div>
+          </div>
+          <div class="progress-bar"><div class="fill" id="kpb-t3rate" style="width:89.4%;background:linear-gradient(90deg,#f97316,#fb923c)"></div></div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">未回款金额</div>
+              <div class="kpi-value" id="kv-t3unpaid" style="color:#ef4444">¥135,680</div>
+              <div class="kpi-change down" id="kc-t3unpaid">涉及 3 个租户</div>
+            </div>
+            <div class="kpi-icon">🚨</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recovery Rate Trend -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">回款率趋势</div>
+          <div class="recovery-controls">
+            <div class="time-dim-btns">
+              <div class="td-btn active" onclick="switchTimeDim('day',this)">按日</div>
+              <div class="td-btn" onclick="switchTimeDim('month',this)">按月</div>
+              <div class="td-btn" onclick="switchTimeDim('year',this)">按年</div>
+            </div>
+            <div class="time-range" id="timeRangeDay">
+              <select class="tr-select" id="dayPresetSelect" onchange="onDaySelectChange(this.value)">
+                <option value="7" selected>近七天</option>
+                <option value="14">近十四天</option>
+                <option value="30">近三十天</option>
+                <option value="custom">自定义时间</option>
+              </select>
+              <div class="tr-date-range" id="customDateRange" style="display:none;">
+                <input type="date" class="tr-date" id="dayStartDate" value="2026-07-01" onchange="onCustomDateChange()">
+                <span style="color:#9ca3af;font-size:12px;">至</span>
+                <input type="date" class="tr-date" id="dayEndDate" value="2026-07-15" onchange="onCustomDateChange()">
+              </div>
+            </div>
+            <div class="time-range" id="timeRangeMonth" style="display:none;">
+              <select class="tr-select" id="monthYearSelect" onchange="updateMonthChart()">
+                <option value="2026" selected>2026年</option>
+                <option value="2025">2025年</option>
+                <option value="2024">2024年</option>
+              </select>
+            </div>
+            <div class="time-range" id="timeRangeYear" style="display:none;">
+              <select class="tr-select" id="yearRangeSelect" onchange="updateYearChart()">
+                <option value="5" selected>近5年</option>
+                <option value="3">近3年</option>
+                <option value="10">近10年</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="chart-body" id="chartRecoveryTrend" style="height:280px;"></div>
+      </div>
+
+      <!-- Settlement Summary (by Tenant) -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">结算明细汇总</div>
+        </div>
+        <div class="table-toolbar">
+          <div class="tb-left">
+            <button class="tb-btn" onclick="toggleSort('settleTable')" id="settleTable-sort-btn">⇅ 倒序</button>
+            <div class="tenant-search-wrap">
+              <input type="text" id="settleSearchInput" placeholder="搜索租户名称..." oninput="filterSettleTable()">
+            </div>
+          </div>
+          <div class="tb-right">
+            <button class="tb-btn export-btn" onclick="exportTable('settleTable','结算明细汇总')">↓ 导出 Excel</button>
+          </div>
+        </div>
+        <table class="data-table" id="settleTable">
+          <thead>
+            <tr><th>租户名称</th><th style="text-align:right" data-type="num">应收金额</th><th style="text-align:right" data-type="num">回款金额</th><th data-type="num">回款率</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>星辰数码科技</td><td style="text-align:right">¥480,000</td><td style="text-align:right;color:#22c55e">¥446,400</td><td><span class="tag tag-green">93.0%</span></td></tr>
+            <tr><td>明远教育集团</td><td style="text-align:right">¥320,000</td><td style="text-align:right;color:#22c55e">¥288,000</td><td><span class="tag tag-green">90.0%</span></td></tr>
+            <tr><td>锦绣服饰贸易</td><td style="text-align:right">¥256,000</td><td style="text-align:right;color:#22c55e">¥217,600</td><td><span class="tag tag-blue">85.0%</span></td></tr>
+            <tr><td>优学科技</td><td style="text-align:right">¥120,000</td><td style="text-align:right;color:#22c55e">¥102,000</td><td><span class="tag tag-blue">85.0%</span></td></tr>
+            <tr><td>万家生活超市</td><td style="text-align:right">¥64,000</td><td style="text-align:right;color:#f97316">¥54,400</td><td><span class="tag tag-orange">85.0%</span></td></tr>
+            <tr><td>快捷办公</td><td style="text-align:right">¥40,000</td><td style="text-align:right;color:#ef4444">¥35,920</td><td><span class="tag tag-orange">89.8%</span></td></tr>
+          </tbody>
+        </table>
+        <div class="table-pagination" id="settleTable-pag"></div>
+      </div>
+
+      <!-- Overdue Table -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">未回款明细</div>
+        </div>
+        <div class="table-toolbar">
+          <div class="tb-left">
+            <button class="tb-btn" onclick="toggleSort('overdueTable')" id="overdueTable-sort-btn">⇅ 倒序</button>
+            <div class="tenant-search-wrap">
+              <input type="text" id="overdueSearchInput" placeholder="搜索租户名称..." oninput="filterOverdueTable()">
+            </div>
+          </div>
+          <div class="tb-right">
+            <button class="tb-btn export-btn" onclick="exportTable('overdueTable','未回款明细')">↓ 导出 Excel</button>
+          </div>
+        </div>
+        <table class="data-table" id="overdueTable">
+          <thead>
+            <tr><th>租户名称</th><th style="text-align:right" data-type="num">应收金额</th><th style="text-align:right" data-type="num">已回款</th><th style="text-align:right" data-type="num">未回款</th><th data-type="num">账期</th><th>状态</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="highlight">锦绣服饰贸易</span></td><td style="text-align:right">¥256,000</td><td style="text-align:right">¥217,600</td><td style="text-align:right;color:#ef4444;font-weight:600">¥38,400</td><td>15天</td><td><span class="tag tag-orange">即将到期</span></td></tr>
+            <tr><td>万家生活超市</td><td style="text-align:right">¥192,000</td><td style="text-align:right">¥144,000</td><td style="text-align:right;color:#ef4444;font-weight:600">¥48,000</td><td>15天</td><td><span class="tag tag-orange">即将到期</span></td></tr>
+            <tr><td>快捷办公</td><td style="text-align:right">¥64,000</td><td style="text-align:right">¥49,600</td><td style="text-align:right;color:#ef4444;font-weight:600">¥14,400</td><td>15天</td><td><span class="tag tag-red">已过期</span></td></tr>
+            <tr><td>健康生活馆</td><td style="text-align:right">¥128,000</td><td style="text-align:right">¥96,000</td><td style="text-align:right;color:#ef4444;font-weight:600">¥32,000</td><td>15天</td><td><span class="tag tag-red">已过期</span></td></tr>
+            <tr><td>华创通讯设备</td><td style="text-align:right">¥86,000</td><td style="text-align:right">¥72,800</td><td style="text-align:right;color:#ef4444;font-weight:600">¥13,200</td><td>15天</td><td><span class="tag tag-orange">即将到期</span></td></tr>
+          </tbody>
+        </table>
+        <div class="table-pagination" id="overdueTable-pag"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+window.MERCHANT_PAGE = 'settlement';
+</script>
+<script src="common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ===== Warm Dashboard Color Palette =====
+  var COLORS = {
+    rose: '#e11d48',
+    blue: '#3b82f6',
+    amber: '#f59e0b',
+    green: '#22c55e',
+    purple: '#a855f7',
+    teal: '#14b8a6',
+    red: '#ef4444'
+  };
+
+  var tooltipStyle = {
+    backgroundColor: 'rgba(255,255,255,.98)',
+    borderColor: '#f3f4f6',
+    borderWidth: 1,
+    textStyle: { color: '#1f2937', fontSize: 13 },
+    extraCssText: 'box-shadow:0 4px 20px rgba(0,0,0,.1);border-radius:10px;'
+  };
+
+  // ===== Time Range Selection =====
+  window.selectPill = function(el) {
+    document.querySelectorAll('.time-pill').forEach(function(p){p.classList.remove('active');});
+    el.classList.add('active');
+    var range = el.getAttribute('data-range');
+    var wrap = document.getElementById('customDateWrap');
+    if (wrap) wrap.style.display = (range === 'custom') ? 'flex' : 'none';
+    updateDashboard(range);
+  };
+
+  window.refresh = function() {
+    var activePill = document.querySelector('.time-pill.active');
+    var range = activePill ? activePill.getAttribute('data-range') : 'quarter';
+    updateDashboard(range);
+  };
+
+  // ===== Mock Data per Time Range =====
+  var rangeData = {
+    week: {
+      t3recv: '¥186,000', t3recvSub: '本周',
+      t3paid: '¥170,190', t3paidChange: '↑ 6.2%', t3paidChangeCls: 'up',
+      t3rate: '91.5%', t3rateChange: '↑ 1.8%', t3rateChangeCls: 'up', t3rateBar: '91.5',
+      t3unpaid: '¥15,810', t3unpaidChange: '涉及 2 个租户'
+    },
+    month: {
+      t3recv: '¥520,000', t3recvSub: '本月',
+      t3paid: '¥461,240', t3paidChange: '↑ 7.3%', t3paidChangeCls: 'up',
+      t3rate: '88.7%', t3rateChange: '↑ 2.5%', t3rateChangeCls: 'up', t3rateBar: '88.7',
+      t3unpaid: '¥58,760', t3unpaidChange: '涉及 3 个租户'
+    },
+    quarter: {
+      t3recv: '¥1,280,000', t3recvSub: '本季度',
+      t3paid: '¥1,144,320', t3paidChange: '↑ 8.5%', t3paidChangeCls: 'up',
+      t3rate: '89.4%', t3rateChange: '↑ 3.2%', t3rateChangeCls: 'up', t3rateBar: '89.4',
+      t3unpaid: '¥135,680', t3unpaidChange: '涉及 3 个租户'
+    }
+  };
+
+  var rangePeriodLabel = { week: '较上周', month: '较上月', quarter: '较上月' };
+
+  function updateDashboard(range) {
+    var d = rangeData[range];
+    if (!d) { d = rangeData.quarter; }
+    var pl = rangePeriodLabel[range] || '较上月';
+
+    var set = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+    var setCls = function(id, val, cls) {
+      var e = document.getElementById(id);
+      if (e) { e.textContent = val; e.className = 'kpi-change ' + (cls || 'up'); }
+    };
+
+    set('kv-t3recv', d.t3recv);
+    set('ks-t3recv', d.t3recvSub);
+    set('kv-t3paid', d.t3paid);
+    var kcT3P = document.getElementById('kc-t3paid');
+    if (kcT3P) { kcT3P.textContent = d.t3paidChange; kcT3P.className = 'kpi-change ' + d.t3paidChangeCls; }
+    set('kv-t3rate', d.t3rate);
+    var kcT3R = document.getElementById('kc-t3rate');
+    if (kcT3R) { kcT3R.innerHTML = d.t3rateChange + '<span class="muted">' + pl + '</span>'; kcT3R.className = 'kpi-change ' + d.t3rateChangeCls; }
+    var bar = document.getElementById('kpb-t3rate');
+    if (bar) bar.style.width = d.t3rateBar + '%';
+    set('kv-t3unpaid', d.t3unpaid);
+    var kcT3U = document.getElementById('kc-t3unpaid');
+    if (kcT3U) { kcT3U.textContent = d.t3unpaidChange; kcT3U.className = 'kpi-change down'; }
+  }
+
+  // ===== Recovery Rate Trend - Time Dimension =====
+  var recoveryState = { dim: 'day', dayCount: 7, dayMode: 'preset', customStart: '2026-07-01', customEnd: '2026-07-15' };
+  var monthLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+  var recoveryMonthData = {
+    2024: [78.2, 79.5, 80.1, 81.3, 82.0, 81.8, 83.2, 82.5, 84.0, 83.8, 85.1, 84.6],
+    2025: [84.0, 83.5, 85.2, 86.0, 85.8, 86.5, 87.0, 86.8, 87.5, 88.0, 87.8, 88.2],
+    2026: [86.5, 87.0, 88.2, 87.5, 88.0, 89.4, 0, 0, 0, 0, 0, 0]
+  };
+
+  var recoveryYearData = {
+    labels: ['2022','2023','2024','2025','2026'],
+    values: [72.5, 76.8, 81.2, 86.3, 88.4]
+  };
+
+  function getDayLabels(count) {
+    var labels = [];
+    var today = new Date(2026, 6, 15);
+    for (var i = count - 1; i >= 0; i--) {
+      var d = new Date(today);
+      d.setDate(d.getDate() - i);
+      labels.push((d.getMonth() + 1) + '/' + d.getDate());
+    }
+    return labels;
+  }
+
+  function getDayValues(count) {
+    var all30 = [82.1, 83.5, 81.8, 84.2, 83.0, 85.1, 84.6, 86.0, 85.3, 87.2,
+      86.5, 84.8, 85.9, 86.2, 87.1, 85.8, 88.3, 89.0, 88.5, 89.4,
+      87.6, 88.1, 86.9, 87.5, 88.8, 89.2, 88.0, 87.3, 88.6, 89.4];
+    return all30.slice(all30.length - count);
+  }
+
+  function getDayLabelsByRange(startStr, endStr) {
+    var labels = [];
+    var start = new Date(startStr);
+    var end = new Date(endStr);
+    var d = new Date(start);
+    while (d <= end) {
+      labels.push((d.getMonth() + 1) + '/' + d.getDate());
+      d.setDate(d.getDate() + 1);
+    }
+    return labels;
+  }
+
+  window.switchTimeDim = function(dim, btn) {
+    recoveryState.dim = dim;
+    document.querySelectorAll('.time-dim-btns .td-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('timeRangeDay').style.display = dim === 'day' ? 'flex' : 'none';
+    document.getElementById('timeRangeMonth').style.display = dim === 'month' ? 'flex' : 'none';
+    document.getElementById('timeRangeYear').style.display = dim === 'year' ? 'flex' : 'none';
+    updateRecoveryChart();
+  };
+
+  window.onDaySelectChange = function(val) {
+    if (val === 'custom') {
+      document.getElementById('customDateRange').style.display = 'flex';
+      recoveryState.dayMode = 'custom';
+      onCustomDateChange();
+    } else {
+      document.getElementById('customDateRange').style.display = 'none';
+      recoveryState.dayMode = 'preset';
+      recoveryState.dayCount = parseInt(val);
+      updateRecoveryChart();
+    }
+  };
+
+  window.onCustomDateChange = function() {
+    var startVal = document.getElementById('dayStartDate').value;
+    var endVal = document.getElementById('dayEndDate').value;
+    if (startVal && endVal) {
+      recoveryState.customStart = startVal;
+      recoveryState.customEnd = endVal;
+      updateRecoveryChart();
+    }
+  };
+
+  window.updateMonthChart = function() {
+    updateRecoveryChart();
+  };
+
+  window.updateYearChart = function() {
+    updateRecoveryChart();
+  };
+
+  function updateRecoveryChart() {
+    if (!chartRecoveryTrend || typeof echarts === 'undefined') return;
+    var labels, values, dim = recoveryState.dim;
+
+    if (dim === 'day') {
+      if (recoveryState.dayMode === 'custom') {
+        labels = getDayLabelsByRange(recoveryState.customStart, recoveryState.customEnd);
+        values = labels.map(function(v, i) {
+          return Math.round((85 + Math.sin(i * 0.6 + labels.length) * 3.5 + i * 0.12) * 10) / 10;
+        });
+      } else {
+        labels = getDayLabels(recoveryState.dayCount);
+        values = getDayValues(recoveryState.dayCount);
+      }
+    } else if (dim === 'month') {
+      var year = parseInt(document.getElementById('monthYearSelect').value);
+      var data = recoveryMonthData[year] || recoveryMonthData[2026];
+      labels = monthLabels.slice();
+      values = data.slice();
+      if (year === 2026) {
+        var lastIdx = 0;
+        for (var i = 0; i < values.length; i++) { if (values[i] > 0) lastIdx = i; }
+        labels = labels.slice(0, lastIdx + 1);
+        values = values.slice(0, lastIdx + 1);
+      }
+    } else {
+      var yearCount = parseInt(document.getElementById('yearRangeSelect').value);
+      labels = recoveryYearData.labels.slice(-yearCount);
+      values = recoveryYearData.values.slice(-yearCount);
+    }
+
+    var minVal = Math.min.apply(null, values);
+    var yMin = Math.max(0, Math.floor((minVal - 5) / 5) * 5);
+
+    chartRecoveryTrend.setOption({
+      tooltip: { trigger: 'axis', formatter: '{b}: {c}%', ...tooltipStyle },
+      grid: { left: 50, right: 20, top: 20, bottom: 40 },
+      xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 11, rotate: labels.length > 10 ? 30 : 0 }, axisTick: { show: false } },
+      yAxis: { type: 'value', min: yMin, max: 100, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af', formatter: '{value}%' } },
+      series: [{
+        type: 'bar', barWidth: labels.length > 15 ? '50%' : '40%',
+        data: values.map(function(v) {
+          var color = v >= 85 ? ['#34d399','#22c55e'] : v >= 80 ? ['#60a5fa','#3b82f6'] : ['#f43f5e','#e11d48'];
+          return { value: v, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:color[0]},{offset:1,color:color[1]}]) } };
+        }),
+        label: { show: labels.length <= 15, position: 'top', fontSize: 11, color: '#6b7280', fontWeight: 600, formatter: '{c}%' },
+        itemStyle: { borderRadius: [6, 6, 0, 0] }
+      }]
+    });
+  }
+
+  // ===== ECharts Initialization =====
+  var chartRecoveryTrend;
+
+  function initAllCharts() {
+    if (typeof echarts === 'undefined') { console.error('ECharts library not loaded'); return; }
+    try {
+      chartRecoveryTrend = echarts.init(document.getElementById('chartRecoveryTrend'));
+      updateRecoveryChart();
+    } catch(e) { console.error('Chart init error:', e); }
+  }
+
+  initAllCharts();
+
+  // Window resize handler
+  window.addEventListener('resize', function() {
+    try { if (chartRecoveryTrend) chartRecoveryTrend.resize(); } catch(e) {}
+  });
+
+  // ===== Settlement & Overdue Table Search Filter =====
+  window.filterSettleTable = function() {
+    var keyword = (document.getElementById('settleSearchInput').value || '').toLowerCase();
+    var rows = document.querySelectorAll('#settleTable tbody tr');
+    rows.forEach(function(row) {
+      var name = (row.cells[0] ? row.cells[0].textContent : '').toLowerCase();
+      row.style.display = (!keyword || name.indexOf(keyword) > -1) ? '' : 'none';
+    });
+  };
+
+  window.filterOverdueTable = function() {
+    var keyword = (document.getElementById('overdueSearchInput').value || '').toLowerCase();
+    var rows = document.querySelectorAll('#overdueTable tbody tr');
+    rows.forEach(function(row) {
+      var name = (row.cells[0] ? row.cells[0].textContent : '').toLowerCase();
+      row.style.display = (!keyword || name.indexOf(keyword) > -1) ? '' : 'none';
+    });
+  };
+
+  // ===== Init pagination =====
+  try { initPagination('settleTable', 5); } catch(e) { console.error('initPagination settleTable error:', e); }
+  try { initPagination('overdueTable', 5); } catch(e) { console.error('initPagination overdueTable error:', e); }
+
+})();
+</script>
+</body>
+</html>

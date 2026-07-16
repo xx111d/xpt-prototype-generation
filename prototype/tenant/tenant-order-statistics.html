@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>租户端 - 订单统计</title>
+<link rel="stylesheet" href="common.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+
+<!-- 侧边栏容器（由 common.js 填充） -->
+<div id="sidebar-container"></div>
+
+<!-- 主内容 -->
+<div class="main">
+
+  <!-- 头部容器（由 common.js 填充） -->
+  <div id="header-container"></div>
+
+  <!-- 移动端导航容器（由 common.js 填充） -->
+  <div id="mobile-nav-container"></div>
+
+  <div class="container">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <label>&#128197; 时间范围</label>
+      <select id="filter-period" onchange="onPeriodChange()">
+        <option value="month">本月</option>
+        <option value="quarter" selected>本季度</option>
+        <option value="half">近半年</option>
+        <option value="year">近一年</option>
+        <option value="custom">自定义</option>
+      </select>
+      <span id="custom-date-range" style="display:none;align-items:center;gap:0.5rem;">
+        <input type="date" id="custom-start" onchange="onCustomDateChange()" style="padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));">
+        <span style="color:hsl(var(--muted-foreground));font-size:0.8125rem;">至</span>
+        <input type="date" id="custom-end" onchange="onCustomDateChange()" style="padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));">
+      </span>
+    </div>
+
+    <!-- ========== 订单统计 ========== -->
+    <div class="tab-content active" id="tab-orders">
+
+      <!-- 各平台订单量 & 销售额 -->
+      <div class="chart-card">
+        <div class="chart-title">各平台订单量 & 销售额</div>
+        <div class="chart-subtitle" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span>按平台维度统计</span>
+          <div class="brand-select-wrapper" id="orders-platform-select-wrapper">
+            <button class="brand-select-trigger" onclick="toggleOrdersPlatformDropdown()">
+              <span id="orders-platform-select-text">全部平台</span>
+              <span class="arrow">&#9662;</span>
+            </button>
+            <div class="brand-dropdown" id="orders-platform-dropdown" style="display:none;">
+              <div class="brand-search">
+                <input type="text" id="orders-platform-search" placeholder="搜索平台..." oninput="onOrdersPlatformSearch()" onclick="event.stopPropagation()">
+              </div>
+              <label class="brand-option"><input type="checkbox" value="all" checked onchange="toggleAllOrdersPlatforms(this)"> 全选</label>
+              <label class="brand-option" data-brand="邦威"><input type="checkbox" value="邦威" checked onchange="onOrdersPlatformChange()"> 邦威</label>
+              <label class="brand-option" data-brand="领先未来"><input type="checkbox" value="领先未来" checked onchange="onOrdersPlatformChange()"> 领先未来</label>
+              <label class="brand-option" data-brand="欧菲斯"><input type="checkbox" value="欧菲斯" checked onchange="onOrdersPlatformChange()"> 欧菲斯</label>
+              <label class="brand-option" data-brand="齐心"><input type="checkbox" value="齐心" checked onchange="onOrdersPlatformChange()"> 齐心</label>
+              <label class="brand-option" data-brand="史泰博"><input type="checkbox" value="史泰博" checked onchange="onOrdersPlatformChange()"> 史泰博</label>
+              <label class="brand-option" data-brand="得力"><input type="checkbox" value="得力" checked onchange="onOrdersPlatformChange()"> 得力</label>
+              <label class="brand-option" data-brand="晨光"><input type="checkbox" value="晨光" checked onchange="onOrdersPlatformChange()"> 晨光</label>
+              <label class="brand-option" data-brand="震坤行"><input type="checkbox" value="震坤行" checked onchange="onOrdersPlatformChange()"> 震坤行</label>
+              <label class="brand-option" data-brand="西域"><input type="checkbox" value="西域" checked onchange="onOrdersPlatformChange()"> 西域</label>
+              <label class="brand-option" data-brand="工品汇"><input type="checkbox" value="工品汇" checked onchange="onOrdersPlatformChange()"> 工品汇</label>
+            </div>
+          </div>
+        </div>
+        <div class="chart-box" id="chart-platform-stats"></div>
+      </div>
+
+      <!-- 各项目订单量 & 销售额 -->
+      <div class="chart-card" style="margin-top:1rem;">
+        <div class="chart-title">各项目订单量 & 销售额</div>
+        <div class="chart-subtitle" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span>按项目维度统计</span>
+          <div class="brand-select-wrapper" id="orders-project-select-wrapper">
+            <button class="brand-select-trigger" onclick="toggleOrdersProjectDropdown()">
+              <span id="orders-project-select-text">全部项目</span>
+              <span class="arrow">&#9662;</span>
+            </button>
+            <div class="brand-dropdown" id="orders-project-dropdown" style="display:none;">
+              <div class="brand-search">
+                <input type="text" id="orders-project-search" placeholder="搜索项目..." oninput="onOrdersProjectSearch()" onclick="event.stopPropagation()">
+              </div>
+              <label class="brand-option"><input type="checkbox" value="all" checked onchange="toggleAllOrdersProjects(this)"> 全选</label>
+              <label class="brand-option" data-brand="军网采购"><input type="checkbox" value="军网采购" checked onchange="onOrdersProjectChange()"> 军网采购</label>
+              <label class="brand-option" data-brand="国网供应链"><input type="checkbox" value="国网供应链" checked onchange="onOrdersProjectChange()"> 国网供应链</label>
+              <label class="brand-option" data-brand="政采云平台"><input type="checkbox" value="政采云平台" checked onchange="onOrdersProjectChange()"> 政采云平台</label>
+              <label class="brand-option" data-brand="央采商城"><input type="checkbox" value="央采商城" checked onchange="onOrdersProjectChange()"> 央采商城</label>
+              <label class="brand-option" data-brand="中航工业集采"><input type="checkbox" value="中航工业集采" checked onchange="onOrdersProjectChange()"> 中航工业集采</label>
+              <label class="brand-option" data-brand="中铁物资采购"><input type="checkbox" value="中铁物资采购" checked onchange="onOrdersProjectChange()"> 中铁物资采购</label>
+              <label class="brand-option" data-brand="中船重工"><input type="checkbox" value="中船重工" checked onchange="onOrdersProjectChange()"> 中船重工</label>
+              <label class="brand-option" data-brand="中国电科"><input type="checkbox" value="中国电科" checked onchange="onOrdersProjectChange()"> 中国电科</label>
+              <label class="brand-option" data-brand="中石油集采"><input type="checkbox" value="中石油集采" checked onchange="onOrdersProjectChange()"> 中石油集采</label>
+              <label class="brand-option" data-brand="中石化集采"><input type="checkbox" value="中石化集采" checked onchange="onOrdersProjectChange()"> 中石化集采</label>
+              <label class="brand-option" data-brand="国家电网"><input type="checkbox" value="国家电网" checked onchange="onOrdersProjectChange()"> 国家电网</label>
+              <label class="brand-option" data-brand="南方电网"><input type="checkbox" value="南方电网" checked onchange="onOrdersProjectChange()"> 南方电网</label>
+              <label class="brand-option" data-brand="中国移动"><input type="checkbox" value="中国移动" checked onchange="onOrdersProjectChange()"> 中国移动</label>
+              <label class="brand-option" data-brand="中国联通"><input type="checkbox" value="中国联通" checked onchange="onOrdersProjectChange()"> 中国联通</label>
+              <label class="brand-option" data-brand="中国电信"><input type="checkbox" value="中国电信" checked onchange="onOrdersProjectChange()"> 中国电信</label>
+            </div>
+          </div>
+        </div>
+        <div class="chart-box" id="chart-project-stats"></div>
+      </div>
+
+      <!-- 订单统计明细表 -->
+      <div class="chart-card" style="margin-top:1rem;">
+        <div class="table-toolbar">
+          <div class="chart-title" style="margin-bottom:0;">订单统计明细</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <input type="text" id="orders-table-search-project" placeholder="搜索项目..." oninput="filterOrdersTable()" style="padding:0.375rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));width:130px;outline:none;">
+            <input type="text" id="orders-table-search-platform" placeholder="搜索平台..." oninput="filterOrdersTable()" style="padding:0.375rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));width:130px;outline:none;">
+            <button class="btn-export" onclick="exportTable('table-orders', '订单统计明细')">&#128229; 导出 Excel</button>
+          </div>
+        </div>
+        <div class="chart-subtitle">按项目 × 平台维度交叉统计</div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="table-orders">
+            <thead>
+              <tr>
+                <th>项目</th>
+                <th>平台</th>
+                <th>订单量</th>
+                <th>销售额</th>
+                <th>客单价</th>
+                <th>退货率</th>
+                <th>同比变化</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              <tr><td>军网采购</td><td>邦威</td><td>1,523</td><td>¥ 186,500</td><td>¥ 122.5</td><td>3.2%</td><td class="up">&#8593; 15.2%</td></tr>
+              <tr><td>国网供应链</td><td>领先未来</td><td>1,205</td><td>¥ 268,300</td><td>¥ 222.7</td><td>2.8%</td><td class="up">&#8593; 8.7%</td></tr>
+              <tr><td>军网采购</td><td>欧菲斯</td><td>1,089</td><td>¥ 200,000</td><td>¥ 183.7</td><td>4.5%</td><td class="up">&#8593; 22.3%</td></tr>
+              <tr><td>政采云平台</td><td>齐心</td><td>987</td><td>¥ 98,720</td><td>¥ 100.0</td><td>3.8%</td><td class="up">&#8593; 6.5%</td></tr>
+              <tr><td>央采商城</td><td>邦威</td><td>856</td><td>¥ 156,200</td><td>¥ 182.5</td><td>2.1%</td><td class="down">&#8595; 3.1%</td></tr>
+              <tr><td>政采云平台</td><td>领先未来</td><td>765</td><td>¥ 117,080</td><td>¥ 153.0</td><td>2.5%</td><td class="up">&#8593; 4.0%</td></tr>
+              <tr><td>国网供应链</td><td>欧菲斯</td><td>732</td><td>¥ 0</td><td>-</td><td>-</td><td>-</td></tr>
+              <tr><td>中航工业集采</td><td>邦威</td><td>689</td><td>¥ 128,600</td><td>¥ 186.6</td><td>3.0%</td><td class="up">&#8593; 15.6%</td></tr>
+              <tr><td>中铁物资采购</td><td>齐心</td><td>543</td><td>¥ 112,400</td><td>¥ 207.0</td><td>5.2%</td><td class="down">&#8595; 2.5%</td></tr>
+              <tr><td>央采商城</td><td>领先未来</td><td>173</td><td>¥ 0</td><td>-</td><td>-</td><td>-</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination-orders"></div>
+      </div>
+
+    </div>
+
+  </div><!-- .container -->
+</div><!-- .main -->
+
+<script>
+// ============ 页面标识（必须在 common.js 之前设置） ============
+window.TENANT_PAGE = 'orders';
+</script>
+<script src="common.js"></script>
+<script>
+// ============ 订单统计图表 ============
+var ordersPlatforms = ['邦威','领先未来','欧菲斯','齐心','史泰博','得力','晨光','震坤行','西域','工品汇'];
+var ordersPlatformOrders = [3068, 2143, 1890, 1530, 1280, 1120, 980, 820, 680, 550];
+var ordersPlatformSales = [471300, 385380, 320000, 211120, 185000, 162000, 138000, 115000, 95000, 78000];
+
+var ordersProjects = ['军网采购','国网供应链','政采云平台','央采商城','中航工业集采','中铁物资采购','中船重工','中国电科','中石油集采','中石化集采','国家电网','南方电网','中国移动','中国联通','中国电信'];
+var ordersProjectOrders = [2612, 1937, 1752, 1029, 689, 543, 520, 480, 450, 420, 380, 350, 320, 280, 250];
+var ordersProjectSales = [386500, 268300, 215800, 156200, 128600, 112400, 98000, 85000, 78000, 72000, 65000, 58000, 52000, 45000, 38000];
+
+function renderOrders() {
+  renderPlatformChart();
+  renderProjectChart();
+}
+
+// ============ 各平台图表 ============
+function renderPlatformChart() {
+  var dom = document.getElementById('chart-platform-stats');
+  if (!dom) return;
+  var chart = echarts.getInstanceByDom(dom);
+  if (chart) chart.dispose();
+  chart = echarts.init(dom);
+
+  var checks = document.querySelectorAll('#orders-platform-dropdown input[type="checkbox"]');
+  var selected = [];
+  for (var i = 1; i < checks.length; i++) {
+    if (checks[i].checked) selected.push(checks[i].value);
+  }
+  if (selected.length === 0) {
+    chart.setOption({ title: { text: '请至少选择一个平台', left: 'center', top: 'center', textStyle: { color: '#999', fontSize: 14 } } }, true);
+    return;
+  }
+
+  var xData = [], orderData = [], salesData = [];
+  for (var i = 0; i < ordersPlatforms.length; i++) {
+    if (selected.indexOf(ordersPlatforms[i]) >= 0) {
+      xData.push(ordersPlatforms[i]);
+      orderData.push(ordersPlatformOrders[i]);
+      salesData.push(ordersPlatformSales[i]);
+    }
+  }
+
+  chart.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: ['订单量', '销售额'], bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 12 } },
+    grid: { left: '3%', right: '4%', bottom: '12%', top: '15%', containLabel: true },
+    dataZoom: xData.length > 6 ? [{ type: 'slider', start: 0, end: 100, height: 16, bottom: 30 }] : [],
+    xAxis: { type: 'category', data: xData, axisLabel: { fontSize: 11, rotate: xData.length > 6 ? 30 : 0 } },
+    yAxis: [
+      { type: 'value', name: '订单量', axisLabel: { formatter: '{value}单' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+      { type: 'value', name: '销售额', axisLabel: { formatter: '¥{value}' }, splitLine: { show: false } }
+    ],
+    series: [
+      { name: '订单量', type: 'bar', data: orderData, itemStyle: { color: '#6366f1', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 36, barGap: '30%' },
+      { name: '销售额', type: 'bar', yAxisIndex: 1, data: salesData, itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 36 }
+    ]
+  }, true);
+}
+
+// ============ 各项目图表 ============
+function renderProjectChart() {
+  var dom = document.getElementById('chart-project-stats');
+  if (!dom) return;
+  var chart = echarts.getInstanceByDom(dom);
+  if (chart) chart.dispose();
+  chart = echarts.init(dom);
+
+  var checks = document.querySelectorAll('#orders-project-dropdown input[type="checkbox"]');
+  var selected = [];
+  for (var i = 1; i < checks.length; i++) {
+    if (checks[i].checked) selected.push(checks[i].value);
+  }
+  if (selected.length === 0) {
+    chart.setOption({ title: { text: '请至少选择一个项目', left: 'center', top: 'center', textStyle: { color: '#999', fontSize: 14 } } }, true);
+    return;
+  }
+
+  var xData = [], orderData = [], salesData = [];
+  for (var i = 0; i < ordersProjects.length; i++) {
+    if (selected.indexOf(ordersProjects[i]) >= 0) {
+      xData.push(ordersProjects[i]);
+      orderData.push(ordersProjectOrders[i]);
+      salesData.push(ordersProjectSales[i]);
+    }
+  }
+
+  chart.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: ['订单量', '销售额'], bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 12 } },
+    grid: { left: '3%', right: '4%', bottom: '12%', top: '15%', containLabel: true },
+    dataZoom: xData.length > 6 ? [{ type: 'slider', start: 0, end: 100, height: 16, bottom: 30 }] : [],
+    xAxis: { type: 'category', data: xData, axisLabel: { fontSize: 10, rotate: xData.length > 6 ? 30 : 0 } },
+    yAxis: [
+      { type: 'value', name: '订单量', axisLabel: { formatter: '{value}单' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+      { type: 'value', name: '销售额', axisLabel: { formatter: '¥{value}' }, splitLine: { show: false } }
+    ],
+    series: [
+      { name: '订单量', type: 'bar', data: orderData, itemStyle: { color: '#6366f1', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 24, barGap: '30%' },
+      { name: '销售额', type: 'bar', yAxisIndex: 1, data: salesData, itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 24 }
+    ]
+  }, true);
+}
+
+// ============ 平台选择 ============
+function toggleOrdersPlatformDropdown() {
+  var dd = document.getElementById('orders-platform-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function toggleAllOrdersPlatforms(cb) {
+  var checks = document.querySelectorAll('#orders-platform-dropdown input[type="checkbox"]');
+  for (var i = 1; i < checks.length; i++) { checks[i].checked = cb.checked; }
+  onOrdersPlatformChange();
+}
+function onOrdersPlatformChange() {
+  var checks = document.querySelectorAll('#orders-platform-dropdown input[type="checkbox"]');
+  var selected = [], allChecked = true;
+  for (var i = 1; i < checks.length; i++) {
+    if (checks[i].checked) selected.push(checks[i].value); else allChecked = false;
+  }
+  checks[0].checked = allChecked;
+  document.getElementById('orders-platform-select-text').textContent = selected.length === 0 ? '请选择平台' : (allChecked ? '全部平台' : '已选 ' + selected.length + ' 个平台');
+  renderPlatformChart();
+}
+function onOrdersPlatformSearch() {
+  var keyword = document.getElementById('orders-platform-search').value.toLowerCase();
+  var options = document.querySelectorAll('#orders-platform-dropdown .brand-option[data-brand]');
+  for (var i = 0; i < options.length; i++) {
+    var name = options[i].getAttribute('data-brand');
+    options[i].classList.toggle('hidden-by-search', name.toLowerCase().indexOf(keyword) < 0);
+  }
+}
+
+// ============ 项目选择 ============
+function toggleOrdersProjectDropdown() {
+  var dd = document.getElementById('orders-project-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function toggleAllOrdersProjects(cb) {
+  var checks = document.querySelectorAll('#orders-project-dropdown input[type="checkbox"]');
+  for (var i = 1; i < checks.length; i++) { checks[i].checked = cb.checked; }
+  onOrdersProjectChange();
+}
+function onOrdersProjectChange() {
+  var checks = document.querySelectorAll('#orders-project-dropdown input[type="checkbox"]');
+  var selected = [], allChecked = true;
+  for (var i = 1; i < checks.length; i++) {
+    if (checks[i].checked) selected.push(checks[i].value); else allChecked = false;
+  }
+  checks[0].checked = allChecked;
+  document.getElementById('orders-project-select-text').textContent = selected.length === 0 ? '请选择项目' : (allChecked ? '全部项目' : '已选 ' + selected.length + ' 个项目');
+  renderProjectChart();
+}
+function onOrdersProjectSearch() {
+  var keyword = document.getElementById('orders-project-search').value.toLowerCase();
+  var options = document.querySelectorAll('#orders-project-dropdown .brand-option[data-brand]');
+  for (var i = 0; i < options.length; i++) {
+    var name = options[i].getAttribute('data-brand');
+    options[i].classList.toggle('hidden-by-search', name.toLowerCase().indexOf(keyword) < 0);
+  }
+}
+
+// ============ 订单明细表格搜索 ============
+function filterOrdersTable() {
+  var kwProject = document.getElementById('orders-table-search-project').value.toLowerCase();
+  var kwPlatform = document.getElementById('orders-table-search-platform').value.toLowerCase();
+  var rows = document.querySelectorAll('#orders-table-body tr');
+  for (var i = 0; i < rows.length; i++) {
+    var cells = rows[i].querySelectorAll('td');
+    var project = cells[0].textContent.toLowerCase();
+    var platform = cells[1].textContent.toLowerCase();
+    var matchProject = !kwProject || project.indexOf(kwProject) >= 0;
+    var matchPlatform = !kwPlatform || platform.indexOf(kwPlatform) >= 0;
+    rows[i].style.display = matchProject && matchPlatform ? '' : 'none';
+  }
+}
+
+// ============ 时间范围 ============
+function onPeriodChange() {
+  var period = document.getElementById('filter-period').value;
+  var customRange = document.getElementById('custom-date-range');
+  if (period === 'custom') {
+    customRange.style.display = 'flex';
+    var today = new Date();
+    var start = document.getElementById('custom-start');
+    var end = document.getElementById('custom-end');
+    if (!start.value) start.value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    if (!end.value) end.value = today.toISOString().split('T')[0];
+  } else {
+    customRange.style.display = 'none';
+  }
+  refreshData();
+}
+
+function onCustomDateChange() {
+  var start = document.getElementById('custom-start').value;
+  var end = document.getElementById('custom-end').value;
+  if (start && end) refreshData();
+}
+
+function refreshData() {
+  renderOrders();
+}
+
+// ============ 初始化 ============
+window.addEventListener('load', function() {
+  renderOrders();
+  initPagination('table-orders', 'pagination-orders', 5);
+});
+
+window.addEventListener('resize', function() {
+  renderOrders();
+});
+</script>
+
+</body>
+</html>

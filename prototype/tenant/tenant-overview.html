@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>租户端 - 经营概览</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<link rel="stylesheet" href="common.css">
+<style>
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --primary: 350 89% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 350 30% 96%;
+    --secondary-foreground: 350 60% 30%;
+    --muted: 350 20% 96%;
+    --muted-foreground: 350 10% 46%;
+    --accent: 350 30% 96%;
+    --accent-foreground: 350 60% 30%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 210 40% 98%;
+    --info: 350 89% 60%;
+    --info-foreground: 0 0% 100%;
+    --border: 350 15% 91%;
+    --input: 350 15% 91%;
+    --ring: 350 89% 60%;
+    --radius: 0.5rem;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --sidebar-width: 220px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: hsl(350, 20%, 96%);
+    color: hsl(222.2, 84%, 4.9%);
+    min-height: 100vh;
+    line-height: 1.6;
+    display: flex;
+  }
+
+  /* ========== Main Content ========== */
+  .main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Container */
+  .container {
+    flex: 1;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  /* Alert */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    border-left: 4px solid;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    position: relative;
+  }
+  .alert-info {
+    background: hsl(350, 89%, 96%);
+    border-color: hsl(var(--info));
+    color: hsl(350, 60%, 30%);
+  }
+  .alert-warning {
+    background: hsl(38, 92%, 95%);
+    border-color: hsl(var(--warning));
+    color: hsl(38, 92%, 30%);
+  }
+  .alert .alert-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .alert .alert-body { flex: 1; }
+  .alert .alert-title { font-weight: 600; margin-bottom: 0.25rem; }
+  .alert .alert-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 1rem; color: inherit; opacity: 0.5; padding: 0 0.25rem;
+    flex-shrink: 0;
+  }
+  .alert .alert-close:hover { opacity: 1; }
+
+  /* Metric Cards */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border));
+    transition: box-shadow 0.15s;
+  }
+  .metric-card:hover { box-shadow: var(--shadow-md); }
+  .metric-card .metric-label {
+    font-size: 0.8125rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  .metric-card .metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    margin-bottom: 0.375rem;
+  }
+  .metric-card .metric-sub {
+    font-size: 0.8125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+  .metric-card .metric-sub.up { color: hsl(var(--success)); }
+  .metric-card .metric-sub.down { color: hsl(var(--destructive)); }
+
+  /* Chart Grid */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-card {
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border));
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card .chart-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin-bottom: 0.25rem;
+  }
+  .chart-card .chart-subtitle {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1rem;
+  }
+  .chart-card .chart-box { width: 100%; height: 320px; }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .filter-bar label {
+    font-size: 0.8125rem;
+    color: hsl(var(--muted-foreground));
+    font-weight: 500;
+  }
+  .filter-bar select {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    background: hsl(var(--background));
+    font-size: 0.8125rem;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    outline: none;
+  }
+  .filter-bar select:focus {
+    border-color: hsl(var(--ring));
+    box-shadow: 0 0 0 2px hsla(350, 89%, 60%, 0.15);
+  }
+
+  /* Toggle Buttons */
+  .toggle-group {
+    display: inline-flex;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .toggle-btn {
+    padding: 0.25rem 0.75rem;
+    border: none;
+    background: hsl(var(--background));
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s;
+    border-right: 1px solid hsl(var(--border));
+  }
+  .toggle-btn:last-child { border-right: none; }
+  .toggle-btn:hover { background: hsl(var(--muted)); }
+  .toggle-btn.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* Brand Selector */
+  .brand-select-wrapper { position: relative; }
+  .brand-select-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    background: hsl(var(--background));
+    font-size: 0.75rem;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    font-weight: 500;
+    min-width: 120px;
+    justify-content: space-between;
+  }
+  .brand-select-trigger:hover { border-color: hsl(var(--ring)); }
+  .brand-select-trigger .arrow { font-size: 0.6rem; color: hsl(var(--muted-foreground)); }
+  .brand-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.25rem;
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    min-width: 160px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 0.375rem 0;
+  }
+  .brand-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    color: hsl(var(--foreground));
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  .brand-option:hover { background: hsl(var(--muted)); }
+  .brand-option input[type="checkbox"] {
+    accent-color: hsl(var(--primary));
+    cursor: pointer;
+  }
+  .brand-search {
+    padding: 0.375rem 0.5rem;
+    border-bottom: 1px solid hsl(var(--border));
+    margin-bottom: 0.25rem;
+    position: sticky;
+    top: 0;
+    background: hsl(var(--background));
+  }
+  .brand-search input {
+    width: 100%;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    outline: none;
+    box-sizing: border-box;
+  }
+  .brand-search input:focus { border-color: hsl(var(--ring)); }
+  .brand-option.hidden-by-search { display: none; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .metrics-row { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    :root { --sidebar-width: 0px; }
+    .main { margin-left: 0; }
+    .metrics-row { grid-template-columns: 1fr; }
+    .container { padding: 1rem; }
+    .main { padding-bottom: 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== Sidebar ========== -->
+<div id="sidebar-container"></div>
+
+<!-- ========== Main ========== -->
+<div class="main">
+
+  <!-- Header -->
+  <div id="header-container"></div>
+
+  <div class="container">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <label>&#128197; 时间范围</label>
+      <select id="filter-period" onchange="onPeriodChange()">
+        <option value="month">本月</option>
+        <option value="quarter" selected>本季度</option>
+        <option value="half">近半年</option>
+        <option value="year">近一年</option>
+        <option value="custom">自定义</option>
+      </select>
+      <span id="custom-date-range" style="display:none;align-items:center;gap:0.5rem;">
+        <input type="date" id="custom-start" onchange="onCustomDateChange()" style="padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));">
+        <span style="color:hsl(var(--muted-foreground));font-size:0.8125rem;">至</span>
+        <input type="date" id="custom-end" onchange="onCustomDateChange()" style="padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));">
+      </span>
+    </div>
+
+    <!-- ========== 经营概览 ========== -->
+    <div class="tab-content active" id="tab-overview">
+
+      <!-- 核心指标看板 -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">销售额</div>
+          <div class="metric-value">¥1,268,540</div>
+          <div class="metric-sub up">&#8593; 12.5% <span style="color:hsl(var(--muted-foreground));margin-left:0.25rem;">同比</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">净利润</div>
+          <div class="metric-value">¥386,200</div>
+          <div class="metric-sub up">&#8593; 8.3% <span style="color:hsl(var(--muted-foreground));margin-left:0.25rem;">同比</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">订单量</div>
+          <div class="metric-value">8,562</div>
+          <div class="metric-sub up">&#8593; 15.7% <span style="color:hsl(var(--muted-foreground));margin-left:0.25rem;">同比</span></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">回款率</div>
+          <div class="metric-value">96.8%</div>
+          <div class="metric-sub down">&#8595; 0.3% <span style="color:hsl(var(--muted-foreground));margin-left:0.25rem;">环比</span></div>
+        </div>
+      </div>
+
+      <!-- 订单分布统计 + 商品分布统计 -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">订单分布统计</div>
+          <div class="chart-subtitle">自然订单与品控订单占比</div>
+          <div class="chart-box" id="chart-order-type"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">商品分布统计</div>
+          <div class="chart-subtitle">
+            <span class="toggle-group">
+              <button class="toggle-btn active" onclick="switchProductDim('category', this)">按类目</button>
+              <button class="toggle-btn" onclick="switchProductDim('supplier', this)">按供应商</button>
+            </span>
+          </div>
+          <div class="chart-box" id="chart-product-dist"></div>
+        </div>
+      </div>
+
+      <!-- 品牌分布统计 -->
+      <div class="charts-row">
+        <div class="chart-card full">
+          <div class="chart-title">品牌分布统计</div>
+          <div class="chart-subtitle" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <span>各品牌销售额及订单量对比</span>
+            <div class="brand-select-wrapper" id="brand-select-wrapper">
+              <button class="brand-select-trigger" onclick="toggleBrandDropdown()">
+                <span id="brand-select-text">全部品牌</span>
+                <span class="arrow">&#9662;</span>
+              </button>
+              <div class="brand-dropdown" id="brand-dropdown" style="display:none;">
+                <div class="brand-search">
+                  <input type="text" id="brand-search-input" placeholder="搜索品牌名称..." oninput="onBrandSearch()" onclick="event.stopPropagation()">
+                </div>
+                <label class="brand-option"><input type="checkbox" value="all" checked onchange="toggleAllBrands(this)"> 全选</label>
+                <label class="brand-option" data-brand="帮宝适"><input type="checkbox" value="帮宝适" checked onchange="onBrandChange()"> 帮宝适</label>
+                <label class="brand-option" data-brand="美赞臣"><input type="checkbox" value="美赞臣" checked onchange="onBrandChange()"> 美赞臣</label>
+                <label class="brand-option" data-brand="兰蔻"><input type="checkbox" value="兰蔻" checked onchange="onBrandChange()"> 兰蔻</label>
+                <label class="brand-option" data-brand="三只松鼠"><input type="checkbox" value="三只松鼠" checked onchange="onBrandChange()"> 三只松鼠</label>
+                <label class="brand-option" data-brand="华为"><input type="checkbox" value="华为" checked onchange="onBrandChange()"> 华为</label>
+                <label class="brand-option" data-brand="海飞丝"><input type="checkbox" value="海飞丝" checked onchange="onBrandChange()"> 海飞丝</label>
+                <label class="brand-option" data-brand="水星家纺"><input type="checkbox" value="水星家纺" checked onchange="onBrandChange()"> 水星家纺</label>
+                <label class="brand-option" data-brand="优衣库"><input type="checkbox" value="优衣库" checked onchange="onBrandChange()"> 优衣库</label>
+                <label class="brand-option" data-brand="品胜"><input type="checkbox" value="品胜" checked onchange="onBrandChange()"> 品胜</label>
+                <label class="brand-option" data-brand="自然堂"><input type="checkbox" value="自然堂" checked onchange="onBrandChange()"> 自然堂</label>
+              </div>
+            </div>
+          </div>
+          <div class="chart-box" id="chart-brand-dist"></div>
+        </div>
+      </div>
+
+      <!-- Warning Alert -->
+      <div class="alert alert-warning" id="alert-warning">
+        <span class="alert-icon">&#9888;</span>
+        <div class="alert-body">
+          <div class="alert-title">数据提示</div>
+          <div>回款率环比下降 0.3%，建议关注"项目A"和"项目C"的回款周期，及时跟进催收。品控订单占比 45.6%，较上季度有所上升，请关注品控流程优化。</div>
+        </div>
+        <button class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+      </div>
+
+    </div>
+
+  </div><!-- .container -->
+</div><!-- .main -->
+
+<!-- ========== Mobile Bottom Nav ========== -->
+<div id="mobile-nav-container"></div>
+
+<script>
+  window.TENANT_PAGE = 'overview';
+</script>
+<script src="common.js"></script>
+<script>
+  // ============ 时间范围 ============
+  function onPeriodChange() {
+    var period = document.getElementById('filter-period').value;
+    var customRange = document.getElementById('custom-date-range');
+    if (period === 'custom') {
+      customRange.style.display = 'flex';
+      var today = new Date();
+      var start = document.getElementById('custom-start');
+      var end = document.getElementById('custom-end');
+      if (!start.value) start.value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+      if (!end.value) end.value = today.toISOString().split('T')[0];
+    } else {
+      customRange.style.display = 'none';
+    }
+    refreshData();
+  }
+
+  function onCustomDateChange() {
+    var start = document.getElementById('custom-start').value;
+    var end = document.getElementById('custom-end').value;
+    if (start && end) refreshData();
+  }
+
+  function refreshData() {
+    renderOverview();
+  }
+
+  // ============ 商品分布维度切换 ============
+  var productDim = 'category';
+
+  function switchProductDim(dim, btn) {
+    productDim = dim;
+    document.querySelectorAll('#tab-overview .toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderProductChart();
+  }
+
+  // ============ 品牌选择器 ============
+  function toggleBrandDropdown() {
+    var dd = document.getElementById('brand-dropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function toggleAllBrands(cb) {
+    var checks = document.querySelectorAll('#brand-dropdown input[type="checkbox"]');
+    for (var i = 1; i < checks.length; i++) {
+      checks[i].checked = cb.checked;
+    }
+    onBrandChange();
+  }
+
+  function onBrandChange() {
+    var checks = document.querySelectorAll('#brand-dropdown input[type="checkbox"]');
+    var selected = [];
+    var allChecked = true;
+    for (var i = 1; i < checks.length; i++) {
+      if (checks[i].checked) { selected.push(checks[i].value); }
+      else { allChecked = false; }
+    }
+    checks[0].checked = allChecked;
+    var text = selected.length === 0 ? '请选择品牌' : (allChecked ? '全部品牌' : '已选 ' + selected.length + ' 个品牌');
+    document.getElementById('brand-select-text').textContent = text;
+    renderBrandChart();
+  }
+
+  // ============ 品牌搜索 ============
+  function onBrandSearch() {
+    var keyword = document.getElementById('brand-search-input').value.toLowerCase();
+    var options = document.querySelectorAll('#brand-dropdown .brand-option[data-brand]');
+    for (var i = 0; i < options.length; i++) {
+      var brand = options[i].getAttribute('data-brand');
+      if (brand.toLowerCase().indexOf(keyword) >= 0) {
+        options[i].classList.remove('hidden-by-search');
+      } else {
+        options[i].classList.add('hidden-by-search');
+      }
+    }
+  }
+
+  // ============ 经营概览图表 ============
+  function renderOverview() {
+    // 订单分布统计 - 环形图（仅自然订单 + 品控订单）
+    var orderDom = document.getElementById('chart-order-type');
+    if (orderDom) {
+      var orderTypeChart = echarts.getInstanceByDom(orderDom);
+      if (orderTypeChart) orderTypeChart.dispose();
+      orderTypeChart = echarts.init(orderDom);
+      orderTypeChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} 单 ({d}%)' },
+        legend: { bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 12 } },
+        series: [{
+          type: 'pie',
+          radius: ['55%', '75%'],
+          center: ['50%', '45%'],
+          avoidLabelOverlap: false,
+          itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false },
+          emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+          data: [
+            { value: 4655, name: '自然订单', itemStyle: { color: '#10b981' } },
+            { value: 3907, name: '品控订单', itemStyle: { color: '#f59e0b' } }
+          ]
+        }]
+      }, true);
+    }
+
+    renderProductChart();
+    renderBrandChart();
+  }
+
+  // ============ 商品分布统计 - 环形图（商品数量） ============
+  function renderProductChart() {
+    var dom = document.getElementById('chart-product-dist');
+    if (!dom) return;
+    var productChart = echarts.getInstanceByDom(dom);
+    if (productChart) productChart.dispose();
+    productChart = echarts.init(dom);
+    var categoryData = [
+      { value: 2580, name: '纸尿裤' },
+      { value: 2130, name: '奶粉' },
+      { value: 1890, name: '面霜' },
+      { value: 1650, name: '零食礼盒' },
+      { value: 1480, name: '手机配件' },
+      { value: 1220, name: '洗发水' },
+      { value: 1050, name: '床上用品' },
+      { value: 920, name: 'T恤' },
+      { value: 760, name: '数据线' },
+      { value: 580, name: '面膜' }
+    ];
+    var supplierData = [
+      { value: 3520, name: '华美食品' },
+      { value: 2810, name: '盛达贸易' },
+      { value: 2340, name: '丰采农产' },
+      { value: 1890, name: '佳源商贸' },
+      { value: 1560, name: '宏达批发' },
+      { value: 1320, name: '鑫源供应链' },
+      { value: 1080, name: '恒通商贸' },
+      { value: 890, name: '鼎丰供应' }
+    ];
+
+    var data = productDim === 'category' ? categoryData : supplierData;
+    var colors = productDim === 'category'
+      ? ['#6366f1','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#f43f5e','#84cc16','#14b8a6','#e11d48']
+      : ['#6366f1','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#f43f5e','#84cc16'];
+
+    productChart.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: {c} 件 ({d}%)' },
+      legend: {
+        type: 'scroll',
+        orient: 'vertical',
+        right: 5,
+        top: 'middle',
+        itemWidth: 8,
+        itemHeight: 8,
+        textStyle: { fontSize: 11 }
+      },
+      color: colors,
+      series: [{
+        type: 'pie',
+        radius: ['45%', '72%'],
+        center: ['40%', '50%'],
+        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+        label: { show: false },
+        emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } },
+        data: data
+      }]
+    }, true);
+  }
+
+  // ============ 品牌分布统计 - 动态柱状图 ============
+  function renderBrandChart() {
+    var dom = document.getElementById('chart-brand-dist');
+    if (!dom) return;
+    var brandChart = echarts.getInstanceByDom(dom);
+    if (brandChart) brandChart.dispose();
+    brandChart = echarts.init(dom);
+
+    // 所有品牌基础数据
+    var allBrands = ['帮宝适','美赞臣','兰蔻','三只松鼠','华为','海飞丝','水星家纺','优衣库','品胜','自然堂'];
+    var baseSales = [198000,175000,152000,128000,115000,92000,78000,68000,55000,42000];
+    var baseOrders = [1520,1380,1120,980,850,720,610,530,420,350];
+
+    // 获取选中的品牌
+    var checks = document.querySelectorAll('#brand-dropdown input[type="checkbox"]');
+    var selectedBrands = [];
+    for (var i = 1; i < checks.length; i++) {
+      if (checks[i].checked) selectedBrands.push(checks[i].value);
+    }
+    if (selectedBrands.length === 0) {
+      brandChart.setOption({
+        title: { text: '请至少选择一个品牌', left: 'center', top: 'center', textStyle: { color: '#999', fontSize: 14 } }
+      }, true);
+      return;
+    }
+
+    // 筛选数据
+    var brands = [], sales = [], orders = [];
+    for (var i = 0; i < allBrands.length; i++) {
+      if (selectedBrands.indexOf(allBrands[i]) >= 0) {
+        brands.push(allBrands[i]);
+        sales.push(baseSales[i]);
+        orders.push(baseOrders[i]);
+      }
+    }
+
+    brandChart.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      legend: { data: ['销售额', '订单量'], bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 12 } },
+      grid: { left: '3%', right: '4%', bottom: '12%', top: '8%', containLabel: true },
+      title: { text: '', left: 'center' },
+      xAxis: { type: 'category', data: brands, axisLabel: { rotate: brands.length > 5 ? 20 : 0, fontSize: 11 } },
+      yAxis: [
+        { type: 'value', name: '销售额', axisLabel: { formatter: '¥{value}' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+        { type: 'value', name: '订单量', axisLabel: { formatter: '{value}单' }, splitLine: { show: false } }
+      ],
+      series: [
+        { name: '销售额', type: 'bar', data: sales, itemStyle: { color: '#6366f1', borderRadius: [4, 4, 0, 0] }, barMaxWidth: 28 },
+        { name: '订单量', type: 'line', yAxisIndex: 1, data: orders, itemStyle: { color: '#f59e0b' }, lineStyle: { width: 2, color: '#f59e0b' }, symbol: 'circle', symbolSize: 6 }
+      ]
+    }, true);
+  }
+
+  // ============ 点击外部关闭下拉 ============
+  document.addEventListener('click', function(e) {
+    var wrapper = document.getElementById('brand-select-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      var dd = document.getElementById('brand-dropdown');
+      if (dd) dd.style.display = 'none';
+    }
+  });
+
+  // ============ 初始化 ============
+  window.addEventListener('load', function() {
+    renderOverview();
+  });
+
+  window.addEventListener('resize', function() {
+    renderOverview();
+  });
+</script>
+
+</body>
+</html>

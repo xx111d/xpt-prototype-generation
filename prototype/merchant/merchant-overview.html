@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商家端 - 经营概览</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>if(typeof echarts==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"><\/script>');}</script>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<script>window.MERCHANT_PAGE = 'overview';</script>
+<script src="common.js"></script>
+
+<div class="layout">
+  <div id="sidebar-container"></div>
+
+  <div class="main">
+    <div id="header-container"></div>
+
+    <div class="content">
+      <!-- Toolbar: Time Pills + Custom Date Range -->
+      <div class="toolbar">
+        <div class="time-pills">
+          <div class="time-pill" data-range="week" onclick="selectPill(this)">近七天</div>
+          <div class="time-pill" data-range="month" onclick="selectPill(this)">本月</div>
+          <div class="time-pill active" data-range="quarter" onclick="selectPill(this)">本季度</div>
+          <div class="time-pill" data-range="custom" onclick="selectPill(this)">自定义</div>
+        </div>
+        <div class="date-range" id="customDateWrap" style="display:none;">
+          <input type="date" id="dateStart" value="2026-01-01">
+          <span style="color:#9ca3af">~</span>
+          <input type="date" id="dateEnd" value="2026-06-30">
+          <button class="btn-apply" onclick="refresh()">查 询</button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card blue">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">总销售量</div>
+              <div class="kpi-value" id="kv-sales">12,846</div>
+              <div class="kpi-change up" id="kc-sales">↑ 18.5%<span class="muted">较上月</span></div>
+            </div>
+            <div class="kpi-icon">📦</div>
+          </div>
+          <div class="kpi-sub" id="ks-sales">日均 428 件</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">总订单量</div>
+              <div class="kpi-value" id="kv-orders">3,264</div>
+              <div class="kpi-change up" id="kc-orders">↑ 12.3%<span class="muted">较上月</span></div>
+            </div>
+            <div class="kpi-icon">🛒</div>
+          </div>
+          <div class="kpi-sub" id="ks-orders">客单价 ¥3,210</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">履约率</div>
+              <div class="kpi-value" id="kv-fulfill">96.8%</div>
+              <div class="kpi-change down" id="kc-fulfill">↓ 0.5%<span class="muted">较上月</span></div>
+            </div>
+            <div class="kpi-icon">✅</div>
+          </div>
+          <div class="kpi-sub">目标值 ≥ 95%</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">结算率</div>
+              <div class="kpi-value" id="kv-settle">89.4%</div>
+              <div class="kpi-change up" id="kc-settle">↑ 3.2%<span class="muted">较上月</span></div>
+            </div>
+            <div class="kpi-icon">💳</div>
+          </div>
+          <div class="kpi-sub" id="ks-settle">未结算 ¥128,500</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Sales Trend -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">销售趋势</div>
+            <div class="chart-actions">
+              <div class="chart-btn active">销售量</div>
+              <div class="chart-btn">订单量</div>
+            </div>
+          </div>
+          <div class="chart-body" id="chartSalesTrend" style="height:300px;"></div>
+        </div>
+
+        <!-- Project Analysis -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">项目分析</div>
+            <div class="chart-actions">
+              <div class="chart-btn active" onclick="switchProjectPie('sales',this)">项目销量</div>
+              <div class="chart-btn" onclick="switchProjectPie('profit',this)">利润占比</div>
+            </div>
+          </div>
+          <div class="chart-body" id="chartProjectAnalysis" style="height:300px;"></div>
+        </div>
+      </div>
+
+      <!-- Tenant Analysis -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">租户分析</div>
+        </div>
+        <div class="tenant-controls">
+          <select class="rank-select" id="rankSelect" onchange="changeRankRange()">
+            <option value="5">前 5 名</option>
+            <option value="10" selected>前 10 名</option>
+            <option value="15">前 15 名</option>
+            <option value="20">前 20 名</option>
+            <option value="custom">自定义范围</option>
+          </select>
+          <div class="rank-custom" id="rankCustom" style="display:none;">
+            <span>第</span>
+            <input type="number" id="rankFrom" value="1" min="1" onchange="renderTenantTable()">
+            <span class="rank-sep">~</span>
+            <input type="number" id="rankTo" value="10" min="1" onchange="renderTenantTable()">
+            <span>名</span>
+          </div>
+          <div class="tenant-search-wrap">
+            <span class="tenant-search-icon">🔍</span>
+            <input type="text" id="tenantSearchInput" placeholder="搜索租户名称..." oninput="renderTenantTable()">
+          </div>
+          <span class="tenant-summary" id="tenantSummary"></span>
+        </div>
+        <div class="table-toolbar">
+          <div class="tb-left">
+            <button class="tb-btn" onclick="toggleSort('tenantTable')" id="tenantTable-sort-btn">⇅ 倒序</button>
+          </div>
+          <div class="tb-right">
+            <button class="tb-btn export-btn" onclick="exportTable('tenantTable','租户分析')">↓ 导出 Excel</button>
+          </div>
+        </div>
+        <table class="data-table" id="tenantTable">
+          <thead>
+            <tr>
+              <th style="width:48px">#</th>
+              <th>租户名称</th>
+              <th style="text-align:right" data-type="num">拿货量（件）</th>
+              <th style="text-align:right" data-type="num">拿货金额</th>
+              <th style="text-align:right" data-type="num">回款金额</th>
+              <th data-type="num">回款率</th>
+              <th style="text-align:right" data-type="num">订单量</th>
+              <th>回款率进度</th>
+            </tr>
+          </thead>
+          <tbody id="tenantTableBody"></tbody>
+        </table>
+        <div class="table-pagination" id="tenantTable-pag"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Warm Dashboard Color Palette =====
+var COLORS = {
+  rose: '#e11d48',
+  blue: '#3b82f6',
+  amber: '#f59e0b',
+  green: '#22c55e',
+  purple: '#a855f7',
+  teal: '#14b8a6',
+  red: '#ef4444'
+};
+
+// ===== Time Range Switching =====
+function selectPill(el) {
+  document.querySelectorAll('.time-pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  var range = el.getAttribute('data-range');
+  var wrap = document.getElementById('customDateWrap');
+  if (wrap) wrap.style.display = (range === 'custom') ? 'flex' : 'none';
+  updateDashboard(range);
+}
+
+// ===== Mock Data per Time Range =====
+var rangeData = {
+  week: {
+    sales: '1,856', salesChange: '↑ 12.5%', salesChangeCls: 'up', salesSub: '日均 265 件',
+    orders: '468', ordersChange: '↑ 8.7%', ordersChangeCls: 'up', ordersSub: '客单价 ¥3,966',
+    fulfill: '97.2%', fulfillChange: '↑ 0.4%', fulfillChangeCls: 'up',
+    settle: '91.5%', settleChange: '↑ 2.1%', settleChangeCls: 'up', settleSub: '未结算 ¥32,800'
+  },
+  month: {
+    sales: '5,420', salesChange: '↑ 15.2%', salesChangeCls: 'up', salesSub: '日均 181 件',
+    orders: '1,356', ordersChange: '↑ 10.8%', ordersChangeCls: 'up', ordersSub: '客单价 ¥4,001',
+    fulfill: '96.5%', fulfillChange: '↓ 0.3%', fulfillChangeCls: 'down',
+    settle: '88.7%', settleChange: '↑ 1.5%', settleChangeCls: 'up', settleSub: '未结算 ¥68,500'
+  },
+  quarter: {
+    sales: '12,846', salesChange: '↑ 18.5%', salesChangeCls: 'up', salesSub: '日均 428 件',
+    orders: '3,264', ordersChange: '↑ 12.3%', ordersChangeCls: 'up', ordersSub: '客单价 ¥3,210',
+    fulfill: '96.8%', fulfillChange: '↓ 0.5%', fulfillChangeCls: 'down',
+    settle: '89.4%', settleChange: '↑ 3.2%', settleChangeCls: 'up', settleSub: '未结算 ¥128,500'
+  }
+};
+
+// Sales trend data per time range
+var salesTrendData = {
+  week: { labels: ['7/9','7/10','7/11','7/12','7/13','7/14','7/15'], values: [245,268,312,289,256,278,208] },
+  month: { labels: ['第1周','第2周','第3周','第4周'], values: [1280,1356,1420,1364] },
+  quarter: { labels: ['1月','2月','3月','4月','5月','6月'], values: [1280,1056,2100,1890,2450,2070] }
+};
+
+var rangePeriodLabel = { week: '较上周', month: '较上月', quarter: '较上月' };
+
+function updateDashboard(range) {
+  var d = rangeData[range];
+  if (!d) { d = rangeData.quarter; }
+  var pl = rangePeriodLabel[range] || '较上月';
+
+  var set = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+  set('kv-sales', d.sales);
+  var kcSales = document.getElementById('kc-sales');
+  if (kcSales) kcSales.innerHTML = d.salesChange + '<span class="muted">' + pl + '</span>';
+  set('ks-sales', d.salesSub);
+  set('kv-orders', d.orders);
+  var kcOrders = document.getElementById('kc-orders');
+  if (kcOrders) { kcOrders.innerHTML = d.ordersChange + '<span class="muted">' + pl + '</span>'; kcOrders.className = 'kpi-change ' + d.ordersChangeCls; }
+  set('ks-orders', d.ordersSub);
+  set('kv-fulfill', d.fulfill);
+  var kcFulfill = document.getElementById('kc-fulfill');
+  if (kcFulfill) { kcFulfill.innerHTML = d.fulfillChange + '<span class="muted">' + pl + '</span>'; kcFulfill.className = 'kpi-change ' + d.fulfillChangeCls; }
+  set('kv-settle', d.settle);
+  var kcSettle = document.getElementById('kc-settle');
+  if (kcSettle) { kcSettle.innerHTML = d.settleChange + '<span class="muted">' + pl + '</span>'; kcSettle.className = 'kpi-change ' + d.settleChangeCls; }
+  set('ks-settle', d.settleSub);
+
+  updateSalesTrend(range);
+}
+
+function updateSalesTrend(range) {
+  if (!chartSalesTrend || typeof echarts === 'undefined') return;
+  var td = salesTrendData[range] || salesTrendData.quarter;
+  var maxVal = Math.max.apply(null, td.values);
+  var barData = td.values.map(function(v) {
+    var isMax = v === maxVal;
+    return {
+      value: v,
+      itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0, color: isMax ? '#34d399' : '#f43f5e'},
+        {offset:1, color: isMax ? '#22c55e' : '#e11d48'}
+      ])}
+    };
+  });
+  chartSalesTrend.setOption({
+    xAxis: { data: td.labels },
+    series: [{ data: barData }]
+  });
+}
+
+function refresh() {
+  var activePill = document.querySelector('.time-pill.active');
+  var range = activePill ? activePill.getAttribute('data-range') : 'quarter';
+  updateDashboard(range);
+}
+
+// ===== ECharts Initialization =====
+var chartSalesTrend, chartProjectAnalysis;
+
+var tooltipStyle = {
+  backgroundColor: 'rgba(255,255,255,.98)',
+  borderColor: '#f3f4f6',
+  borderWidth: 1,
+  textStyle: { color: '#1f2937', fontSize: 13 },
+  extraCssText: 'box-shadow:0 4px 20px rgba(0,0,0,.1);border-radius:10px;'
+};
+
+function initAllCharts() {
+  if (typeof echarts === 'undefined') { console.error('ECharts library not loaded'); return; }
+  try {
+  // 1. Sales Trend Bar Chart
+  chartSalesTrend = echarts.init(document.getElementById('chartSalesTrend'));
+  chartSalesTrend.setOption({
+    tooltip: { trigger: 'axis', formatter: '{b}: {c} 件', ...tooltipStyle },
+    grid: { left: 50, right: 20, top: 20, bottom: 40 },
+    xAxis: { type: 'category', data: ['1月','2月','3月','4月','5月','6月'], axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280' }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af' } },
+    series: [{
+      type: 'bar', barWidth: '40%',
+      data: [
+        { value: 1280, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 1056, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 2100, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 1890, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 2450, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#34d399'},{offset:1,color:'#22c55e'}]) } },
+        { value: 2070, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } }
+      ],
+      label: { show: true, position: 'top', fontSize: 11, color: '#6b7280', fontWeight: 600 },
+      itemStyle: { borderRadius: [6, 6, 0, 0] }
+    }]
+  });
+
+  // 2. Project Analysis Pie Chart
+  var projectPieData = {
+    sales: [
+      { name: '政企集采项目', value: 3580 },
+      { name: '教育采购专项', value: 2046 },
+      { name: '企业团购项目', value: 2046 },
+      { name: '政府补贴采购', value: 1534 },
+      { name: '其他项目', value: 1023 }
+    ],
+    profit: [
+      { name: '政企集采项目', value: 428 },
+      { name: '教育采购专项', value: 356 },
+      { name: '企业团购项目', value: 285 },
+      { name: '政府补贴采购', value: 214 },
+      { name: '其他项目', value: 143 }
+    ]
+  };
+  var pieColors = [COLORS.rose, COLORS.blue, COLORS.amber, COLORS.purple, COLORS.teal];
+
+  chartProjectAnalysis = echarts.init(document.getElementById('chartProjectAnalysis'));
+  function setProjectPie(key) {
+    var suffix = key === 'sales' ? ' 件' : ' 万';
+    chartProjectAnalysis.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: {c}' + suffix + ' ({d}%)', ...tooltipStyle },
+      legend: { orient: 'vertical', right: 16, top: 'center', textStyle: { fontSize: 13, color: '#374151' }, itemWidth: 12, itemHeight: 12, itemGap: 14 },
+      color: pieColors,
+      series: [{
+        type: 'pie', radius: ['42%', '72%'], center: ['35%', '50%'],
+        label: { show: false },
+        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+        itemStyle: { borderColor: '#fff', borderWidth: 3 },
+        data: projectPieData[key]
+      }]
+    });
+  }
+  setProjectPie('sales');
+
+  window.switchProjectPie = function(key, btnEl) {
+    btnEl.parentNode.querySelectorAll('.chart-btn').forEach(function(b){ b.classList.remove('active'); });
+    btnEl.classList.add('active');
+    setProjectPie(key);
+  };
+
+  } catch(e) { console.error('Chart init error:', e); }
+}
+
+// ===== Tenant Analysis =====
+var tenantData = [
+  { name: '星辰数码科技', qty: 3256, amount: 1890000, recovered: 1756000, rate: 92.9, orders: 486 },
+  { name: '明远教育集团', qty: 2180, amount: 1250000, recovered: 1125000, rate: 90.0, orders: 352 },
+  { name: '锦绣服饰贸易', qty: 1920, amount: 980000, recovered: 833000, rate: 85.0, orders: 298 },
+  { name: '优学科技', qty: 1350, amount: 760000, recovered: 608000, rate: 80.0, orders: 215 },
+  { name: '万家生活超市', qty: 1120, amount: 520000, recovered: 390000, rate: 75.0, orders: 186 },
+  { name: '优品家居', qty: 980, amount: 450000, recovered: 360000, rate: 80.0, orders: 162 },
+  { name: '快捷办公', qty: 756, amount: 320000, recovered: 240000, rate: 75.0, orders: 128 },
+  { name: '健康生活馆', qty: 620, amount: 280000, recovered: 224000, rate: 80.0, orders: 96 },
+  { name: '华创通讯设备', qty: 580, amount: 265000, recovered: 225250, rate: 85.0, orders: 88 },
+  { name: '盛达电子', qty: 520, amount: 238000, recovered: 178500, rate: 75.0, orders: 76 },
+  { name: '中联办公', qty: 460, amount: 198000, recovered: 168300, rate: 85.0, orders: 68 },
+  { name: '乐享生活', qty: 380, amount: 165000, recovered: 123750, rate: 75.0, orders: 55 },
+  { name: '智联科技', qty: 320, amount: 142000, recovered: 113600, rate: 80.0, orders: 48 },
+  { name: '汇通贸易', qty: 280, amount: 118000, recovered: 88500, rate: 75.0, orders: 42 },
+  { name: '新锐数码', qty: 220, amount: 95000, recovered: 66500, rate: 70.0, orders: 35 }
+];
+
+function getTagClass(rate) {
+  if (rate >= 90) return 'tag-green';
+  if (rate >= 80) return 'tag-blue';
+  if (rate >= 70) return 'tag-orange';
+  return 'tag-red';
+}
+
+function getBarColor(rate) {
+  if (rate >= 90) return '#22c55e';
+  if (rate >= 80) return '#3b82f6';
+  if (rate >= 70) return '#f97316';
+  return '#ef4444';
+}
+
+function renderTenantTable() {
+  var keyword = (document.getElementById('tenantSearchInput').value || '').toLowerCase();
+  var rankSelect = document.getElementById('rankSelect');
+  var rankValue = rankSelect.value;
+
+  var filtered = tenantData.filter(function(t) {
+    return t.name.toLowerCase().indexOf(keyword) > -1;
+  });
+
+  var from = 0, to;
+  if (rankValue === 'custom') {
+    from = Math.max(1, parseInt(document.getElementById('rankFrom').value) || 1) - 1;
+    to = Math.max(from + 1, parseInt(document.getElementById('rankTo').value) || 10);
+  } else {
+    to = parseInt(rankValue);
+  }
+
+  var displayData;
+  if (keyword) {
+    displayData = filtered;
+  } else {
+    displayData = filtered.slice(from, to);
+  }
+
+  var totalQty = 0, totalAmount = 0, totalRecovered = 0, totalOrders = 0;
+  displayData.forEach(function(t) {
+    totalQty += t.qty;
+    totalAmount += t.amount;
+    totalRecovered += t.recovered;
+    totalOrders += t.orders;
+  });
+  var summaryEl = document.getElementById('tenantSummary');
+  summaryEl.innerHTML = '共 <strong>' + displayData.length + '</strong> 个租户 | '
+    + '拿货量 ' + totalQty.toLocaleString() + ' 件 | '
+    + '总金额 ¥' + (totalAmount / 10000).toFixed(1) + ' 万 | '
+    + '总订单 ' + totalOrders.toLocaleString() + ' 笔';
+
+  var tbody = document.getElementById('tenantTableBody');
+  if (displayData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af;">未找到匹配的租户</td></tr>';
+  } else {
+    var html = '';
+    displayData.forEach(function(t, i) {
+      var originalRank = tenantData.indexOf(t) + 1;
+      var tagCls = getTagClass(t.rate);
+      var barColor = getBarColor(t.rate);
+      var nameHtml = keyword ? '<span class="highlight">' + t.name + '</span>' : t.name;
+      html += '<tr>'
+        + '<td><strong>' + originalRank + '</strong></td>'
+        + '<td>' + nameHtml + '</td>'
+        + '<td class="num">' + t.qty.toLocaleString() + '</td>'
+        + '<td class="num">¥' + t.amount.toLocaleString() + '</td>'
+        + '<td class="num">¥' + t.recovered.toLocaleString() + '</td>'
+        + '<td><span class="tag ' + tagCls + '">' + t.rate.toFixed(1) + '%</span></td>'
+        + '<td class="num">' + t.orders.toLocaleString() + '</td>'
+        + '<td><div class="progress-bar"><div class="fill" style="width:' + t.rate + '%;background:' + barColor + '"></div></div></td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  // Re-init pagination state
+  pagState['tenantTable'] = { page: 1, pageSize: 10, asc: false };
+  renderTenantPagination();
+}
+
+function renderTenantPagination() {
+  var tableId = 'tenantTable';
+  var st = pagState[tableId];
+  if (!st) return;
+  var tbody = document.getElementById('tenantTableBody');
+  var allRows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+  var total = allRows.length;
+  var totalPages = Math.max(1, Math.ceil(total / st.pageSize));
+  if (st.page > totalPages) st.page = totalPages;
+
+  var start = (st.page - 1) * st.pageSize;
+  var end = start + st.pageSize;
+  allRows.forEach(function(row, i) {
+    row.style.display = (i >= start && i < end) ? '' : 'none';
+  });
+
+  var pag = document.getElementById(tableId + '-pag');
+  if (!pag) return;
+  var html = '<span>共 ' + total + ' 条，第 ' + st.page + '/' + totalPages + ' 页</span>';
+  html += '<div class="pg-controls">';
+  html += '<span class="pg-btn' + (st.page <= 1 ? ' disabled' : '') + '" onclick="goTenantPage(' + (st.page - 1) + ')">‹</span>';
+  for (var p = 1; p <= totalPages; p++) {
+    html += '<span class="pg-btn' + (p === st.page ? ' active' : '') + '" onclick="goTenantPage(' + p + ')">' + p + '</span>';
+  }
+  html += '<span class="pg-btn' + (st.page >= totalPages ? ' disabled' : '') + '" onclick="goTenantPage(' + (st.page + 1) + ')">›</span>';
+  html += '</div>';
+  pag.innerHTML = html;
+}
+
+function goTenantPage(page) {
+  var st = pagState['tenantTable'];
+  if (!st) return;
+  var total = document.getElementById('tenantTableBody').querySelectorAll('tr').length;
+  var totalPages = Math.max(1, Math.ceil(total / st.pageSize));
+  if (page < 1 || page > totalPages) return;
+  st.page = page;
+  renderTenantPagination();
+}
+
+function changeRankRange() {
+  var val = document.getElementById('rankSelect').value;
+  document.getElementById('rankCustom').style.display = val === 'custom' ? 'flex' : 'none';
+  renderTenantTable();
+}
+
+// ===== Init =====
+initAllCharts();
+try { renderTenantTable(); } catch(e) { console.error('renderTenantTable error:', e); }
+
+// Window resize handler
+window.addEventListener('resize', function() {
+  [chartSalesTrend, chartProjectAnalysis].forEach(function(c) {
+    try { if (c) c.resize(); } catch(e) {}
+  });
+});
+</script>
+
+</body>
+</html>

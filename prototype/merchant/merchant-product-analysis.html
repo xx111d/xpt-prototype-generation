@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商家端 - 商品分析</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>if(typeof echarts==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"><\/script>');}</script>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="layout">
+  <div id="sidebar-container"></div>
+  <div class="main">
+    <div id="header-container"></div>
+    <div class="content">
+      <!-- Toolbar: Time Pills + Custom Date Range -->
+      <div class="toolbar">
+        <div class="time-pills">
+          <div class="time-pill" data-range="week" onclick="selectPill(this)">近七天</div>
+          <div class="time-pill" data-range="month" onclick="selectPill(this)">本月</div>
+          <div class="time-pill active" data-range="quarter" onclick="selectPill(this)">本季度</div>
+          <div class="time-pill" data-range="custom" onclick="selectPill(this)">自定义</div>
+        </div>
+        <div class="date-range" id="customDateWrap" style="display:none;">
+          <input type="date" id="dateStart" value="2026-01-01">
+          <span style="color:#9ca3af">~</span>
+          <input type="date" id="dateEnd" value="2026-06-30">
+          <button class="btn-apply" onclick="refresh()">查 询</button>
+        </div>
+      </div>
+
+      <!-- ===== 商品分析 ===== -->
+      <div class="kpi-row">
+        <div class="kpi-card blue">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">在售商品数</div>
+              <div class="kpi-value" id="kv-products">368</div>
+            </div>
+            <div class="kpi-icon">📋</div>
+          </div>
+          <div class="kpi-sub" id="ks-products">较上月 +12</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">整体动销率</div>
+              <div class="kpi-value" id="kpiTurnoverRate">78.5%</div>
+              <div class="kpi-change up" id="kpiTurnoverChange">↑ 2.1%</div>
+            </div>
+            <div class="kpi-icon">📈</div>
+          </div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">滞销商品数</div>
+              <div class="kpi-value" id="kpiSlowCount">79</div>
+              <div class="kpi-change down" id="kpiSlowChange">↑ 8<span class="muted">需关注</span></div>
+            </div>
+            <div class="kpi-icon">⚠️</div>
+          </div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">平均利润率</div>
+              <div class="kpi-value" id="kv-profit">18.6%</div>
+              <div class="kpi-change up" id="kc-profit">↑ 1.2%</div>
+            </div>
+            <div class="kpi-icon">💎</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Sales Ranking -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">商品销量排行</div>
+          <div class="chart-actions" id="productViewBtns">
+            <div class="chart-btn active" onclick="switchProductView('order',this)">按项目单</div>
+            <div class="chart-btn" onclick="switchProductView('project',this)">按项目</div>
+          </div>
+        </div>
+        <div class="table-toolbar">
+          <div class="tb-left">
+            <button class="tb-btn" onclick="toggleSort('productTable')" id="productTable-sort-btn">⇅ 倒序</button>
+          </div>
+          <div class="tb-right" id="productToolbarRight">
+            <div class="search-select" id="projectSelect" style="display:none;">
+              <input class="ss-input" placeholder="选择项目" onfocus="openSSMenu('projectSelect')" oninput="filterSSOptions('projectSelect')" onblur="closeSSMenuDelayed('projectSelect')">
+              <span class="ss-clear" onclick="clearSSValue('projectSelect',event)">✕</span>
+              <span class="ss-arrow">▾</span>
+              <div class="ss-menu"></div>
+            </div>
+            <div class="search-select" id="platformSelect" style="display:none;">
+              <input class="ss-input" placeholder="选择平台" disabled onfocus="openSSMenu('platformSelect')" oninput="filterSSOptions('platformSelect')" onblur="closeSSMenuDelayed('platformSelect')">
+              <span class="ss-clear" onclick="clearSSValue('platformSelect',event)">✕</span>
+              <span class="ss-arrow">▾</span>
+              <div class="ss-menu"></div>
+            </div>
+            <button class="tb-btn export-btn" onclick="exportTable('productTable','商品销量排行')">↓ 导出 Excel</button>
+          </div>
+        </div>
+        <table class="data-table" id="productTable">
+          <thead id="productTableHead"></thead>
+          <tbody id="productTableBody"></tbody>
+        </table>
+        <div class="table-pagination" id="productTable-pag"></div>
+      </div>
+
+      <!-- Turnover + Price Analysis Row (4:6) -->
+      <div style="display:grid;grid-template-columns:4fr 6fr;gap:24px;align-items:stretch;margin-bottom:0;">
+        <div class="chart-card" style="margin-bottom:0;">
+          <div class="chart-header">
+            <div class="chart-title">动销率分析</div>
+          </div>
+          <div class="turnover-rules" id="turnoverRules">
+            <span class="tr-label">规则设置：</span>
+            <span class="tr-summary" id="turnoverRuleSummary">
+              <span class="tr-dot green"></span>畅销 ≥500 &nbsp;
+              <span class="tr-dot blue"></span>正常 ≥150 &nbsp;
+              <span class="tr-dot amber"></span>预警 ≥50 &nbsp;
+              <span class="tr-dot red"></span>滞销 &lt;50
+            </span>
+            <button class="tr-btn-edit" onclick="openTurnoverModal()">设置规则</button>
+          </div>
+          <div class="chart-body" id="chartTurnover" style="height:280px;flex:1;"></div>
+        </div>
+
+        <div class="price-panel" id="pricePanel" style="margin-bottom:0;">
+          <div class="pp-header">
+            <div class="pp-title">价格分析</div>
+            <span class="pp-count" id="ppCountLabel">已选 <strong>0</strong> 个商品</span>
+          </div>
+          <div class="pp-toolbar">
+            <div class="search-select" id="ppProjectSelect">
+              <input class="ss-input" placeholder="选择项目" onfocus="openSSMenu('ppProjectSelect')" oninput="filterSSOptions('ppProjectSelect')" onblur="closeSSMenuDelayed('ppProjectSelect')">
+              <span class="ss-clear" onclick="clearPPProject(event)">✕</span>
+              <span class="ss-arrow">▾</span>
+              <div class="ss-menu"></div>
+            </div>
+            <div class="search-select" id="ppPlatformSelect">
+              <input class="ss-input" placeholder="请先选择项目" disabled onfocus="openSSMenu('ppPlatformSelect')" oninput="filterSSOptions('ppPlatformSelect')" onblur="closeSSMenuDelayed('ppPlatformSelect')">
+              <span class="ss-clear" onclick="clearPPPlatform(event)">✕</span>
+              <span class="ss-arrow">▾</span>
+              <div class="ss-menu"></div>
+            </div>
+            <div class="pp-search-wrap">
+              <div class="pp-search">
+                <span class="pp-search-icon">🔍</span>
+                <input type="text" id="ppSearchInput" placeholder="请先选择项目和平台" disabled onfocus="onPriceSearchFocus()" oninput="filterPriceProducts()" onblur="onPriceSearchBlur()">
+              </div>
+              <div class="pp-dropdown" id="ppDropdown"></div>
+            </div>
+          </div>
+          <div class="pp-chart-area">
+            <div class="chart-body" id="chartPriceAnalysis" style="flex:1;"></div>
+          </div>
+          <div class="pp-legend">
+            <span><span style="display:inline-block;width:16px;height:3px;background:#3b82f6;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>供货价</span>
+            <span><span style="display:inline-block;width:16px;height:3px;background:#f97316;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>提报价</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:rgba(34,197,94,.15);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>利润差(正)</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:rgba(239,68,68,.15);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>利润差(负)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Turnover Rules Modal ===== -->
+<div class="modal-overlay" id="turnoverModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">自定义动销率规则</span>
+      <button class="modal-close" onclick="closeTurnoverModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc">设置各分类的月销售量阈值，系统将根据阈值对商品进行动销状态分类，并更新统计图表。</div>
+      <div class="modal-rule-row">
+        <span class="tr-dot green"></span>
+        <span class="modal-rule-label">畅销品</span>
+        <span class="modal-rule-op">≥</span>
+        <input type="number" id="modalRuleBest" value="500" min="0" step="10">
+        <span class="modal-rule-unit">件</span>
+      </div>
+      <div class="modal-rule-row">
+        <span class="tr-dot blue"></span>
+        <span class="modal-rule-label">正常品</span>
+        <span class="modal-rule-op">≥</span>
+        <input type="number" id="modalRuleNormal" value="150" min="0" step="10">
+        <span class="modal-rule-unit">件</span>
+      </div>
+      <div class="modal-rule-row">
+        <span class="tr-dot amber"></span>
+        <span class="modal-rule-label">滞销预警</span>
+        <span class="modal-rule-op">≥</span>
+        <input type="number" id="modalRuleWarn" value="50" min="0" step="10">
+        <span class="modal-rule-unit">件</span>
+      </div>
+      <div class="modal-rule-row">
+        <span class="tr-dot red"></span>
+        <span class="modal-rule-label">滞销品</span>
+        <span class="modal-rule-op">&lt;</span>
+        <span class="modal-rule-val">预警值</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-reset" onclick="resetTurnoverRules()">恢复默认</button>
+      <button class="modal-btn-cancel" onclick="closeTurnoverModal()">取消</button>
+      <button class="modal-btn-apply" onclick="applyTurnoverRules()">应用</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.MERCHANT_PAGE = 'product';
+</script>
+<script src="common.js"></script>
+<script>
+// ===== Color Palette =====
+var COLORS = {
+  rose: '#e11d48',
+  blue: '#3b82f6',
+  amber: '#f59e0b',
+  green: '#22c55e',
+  purple: '#a855f7',
+  teal: '#14b8a6',
+  red: '#ef4444'
+};
+
+// ===== Time Range =====
+function selectPill(el) {
+  document.querySelectorAll('.time-pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  var range = el.getAttribute('data-range');
+  var wrap = document.getElementById('customDateWrap');
+  if (wrap) wrap.style.display = (range === 'custom') ? 'flex' : 'none';
+  updateDashboard(range);
+}
+
+// ===== Mock Data per Time Range =====
+var rangeData = {
+  week: {
+    products: '368', productsSub: '较上周 +3',
+    turnoverRate: '76.2%', turnoverChange: '↑ 1.5%', turnoverChangeCls: 'up',
+    slowCount: '88', slowChange: '↑ 5', slowChangeCls: 'down',
+    profit: '17.8%', profitChange: '↑ 0.8%', profitChangeCls: 'up'
+  },
+  month: {
+    products: '362', productsSub: '较上月 +8',
+    turnoverRate: '77.1%', turnoverChange: '↑ 1.8%', turnoverChangeCls: 'up',
+    slowCount: '83', slowChange: '↑ 6', slowChangeCls: 'down',
+    profit: '18.2%', profitChange: '↑ 1.0%', profitChangeCls: 'up'
+  },
+  quarter: {
+    products: '368', productsSub: '较上月 +12',
+    turnoverRate: '78.5%', turnoverChange: '↑ 2.1%', turnoverChangeCls: 'up',
+    slowCount: '79', slowChange: '↑ 8', slowChangeCls: 'down',
+    profit: '18.6%', profitChange: '↑ 1.2%', profitChangeCls: 'up'
+  }
+};
+
+function updateDashboard(range) {
+  var d = rangeData[range];
+  if (!d) { d = rangeData.quarter; }
+
+  var set = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+  var setCls = function(id, val, cls) {
+    var e = document.getElementById(id);
+    if (e) { e.textContent = val; e.className = 'kpi-change ' + (cls || 'up'); }
+  };
+
+  set('kv-products', d.products);
+  set('ks-products', d.productsSub);
+  set('kpiTurnoverRate', d.turnoverRate);
+  set('kpiTurnoverChange', d.turnoverChange);
+  var ktc = document.getElementById('kpiTurnoverChange');
+  if (ktc) ktc.className = 'kpi-change ' + d.turnoverChangeCls;
+  set('kpiSlowCount', d.slowCount);
+  var ksc = document.getElementById('kpiSlowChange');
+  if (ksc) { ksc.innerHTML = d.slowChange + '<span class="muted">需关注</span>'; ksc.className = 'kpi-change ' + d.slowChangeCls; }
+  set('kv-profit', d.profit);
+  var kcProfit = document.getElementById('kc-profit');
+  if (kcProfit) { kcProfit.textContent = d.profitChange; kcProfit.className = 'kpi-change ' + d.profitChangeCls; }
+}
+
+function refresh() {
+  var activePill = document.querySelector('.time-pill.active');
+  var range = activePill ? activePill.getAttribute('data-range') : 'quarter';
+  updateDashboard(range);
+}
+
+// ===== ECharts =====
+var chartTurnover, chartPriceAnalysis;
+
+var tooltipStyle = {
+  backgroundColor: 'rgba(255,255,255,.98)',
+  borderColor: '#f3f4f6',
+  borderWidth: 1,
+  textStyle: { color: '#1f2937', fontSize: 13 },
+  extraCssText: 'box-shadow:0 4px 20px rgba(0,0,0,.1);border-radius:10px;'
+};
+
+// ===== Product Sales Ranking =====
+var productData = [
+  { name: '华为Mate 60 Pro 12+256G', supply: 5299, quote: 6999, sales: 1820, project: '军网', platform: '领先未来' },
+  { name: '小米14 Ultra 16+512G', supply: 3499, quote: 4999, sales: 1256, project: '军网', platform: '邦威' },
+  { name: 'MacBook Air M3 13寸', supply: 6499, quote: 8999, sales: 890, project: '政企集采', platform: '中科信息' },
+  { name: '戴森V15 Detect无线路由', supply: 2990, quote: 4490, sales: 680, project: '政企集采', platform: '领先未来' },
+  { name: '华为FreeBuds Pro 3', supply: 699, quote: 1099, sales: 620, project: '教育采购', platform: '华教通' },
+  { name: '联想ThinkPad X1 Carbon', supply: 7299, quote: 9999, sales: 456, project: '政企集采', platform: '中科信息' },
+  { name: '罗技MX Master 3S', supply: 499, quote: 799, sales: 380, project: '企业团购', platform: '优采' },
+  { name: 'iPad Air M2 11寸', supply: 3999, quote: 5499, sales: 345, project: '教育采购', platform: '华教通' },
+  { name: '索尼WH-1000XM5耳机', supply: 1899, quote: 2499, sales: 312, project: '军网', platform: '领先未来' },
+  { name: '华为Watch GT4手表', supply: 899, quote: 1499, sales: 288, project: '军网', platform: '邦威' },
+  { name: '小米手环8 Pro', supply: 199, quote: 299, sales: 256, project: '企业团购', platform: '企服通' },
+  { name: '华为超级快充车载充电器', supply: 129, quote: 199, sales: 198, project: '政企集采', platform: '领先未来' },
+  { name: '戴尔U2723QE显示器', supply: 2899, quote: 3999, sales: 168, project: '军网', platform: '邦威' },
+  { name: '三星Galaxy Buds3 Pro', supply: 799, quote: 1199, sales: 145, project: '教育采购', platform: '华教通' },
+  { name: '得力办公套装', supply: 89, quote: 159, sales: 120, project: '企业团购', platform: '优采' }
+];
+
+var projectPlatformMap = {};
+productData.forEach(function(p) {
+  if (!projectPlatformMap[p.project]) projectPlatformMap[p.project] = [];
+  if (projectPlatformMap[p.project].indexOf(p.platform) === -1) {
+    projectPlatformMap[p.project].push(p.platform);
+  }
+});
+
+var productViewMode = 'order';
+var selectedFilter = { project: '', platform: '' };
+
+var turnoverRules = { best: 500, normal: 150, warn: 50 };
+var TURNOVER_DEFAULTS = { best: 500, normal: 150, warn: 50 };
+
+function getProductStatus(sales) {
+  if (sales >= turnoverRules.best) return { text: '畅销', cls: 'tag-green' };
+  if (sales >= turnoverRules.normal) return { text: '正常', cls: 'tag-blue' };
+  if (sales >= turnoverRules.warn) return { text: '滞销预警', cls: 'tag-orange' };
+  return { text: '滞销', cls: 'tag-red' };
+}
+
+function calcTurnoverDistribution() {
+  var counts = { best: 0, normal: 0, warn: 0, slow: 0 };
+  if (!productData || !productData.length) return counts;
+  productData.forEach(function(p) {
+    if (p.sales >= turnoverRules.best) counts.best++;
+    else if (p.sales >= turnoverRules.normal) counts.normal++;
+    else if (p.sales >= turnoverRules.warn) counts.warn++;
+    else counts.slow++;
+  });
+  return counts;
+}
+
+function updateTurnoverChart() {
+  var c = calcTurnoverDistribution();
+  var total = c.best + c.normal + c.warn + c.slow;
+  chartTurnover.setOption({
+    tooltip: {
+      trigger: 'item', ...tooltipStyle,
+      formatter: function(params) {
+        return '<strong>' + params.name + '</strong><br/>数量: ' + params.value + ' 个 (' + params.percent + '%)';
+      }
+    },
+    legend: {
+      orient: 'horizontal', bottom: 8, left: 'center',
+      textStyle: { fontSize: 12, color: '#374151' },
+      itemWidth: 10, itemHeight: 10, itemGap: 16
+    },
+    color: [COLORS.green, COLORS.blue, COLORS.amber, COLORS.red],
+    series: [{
+      type: 'pie', radius: ['40%', '68%'], center: ['50%', '42%'],
+      label: {
+        show: true, position: 'outside',
+        formatter: function(p) { return p.value > 0 ? p.value + '个' : ''; },
+        fontSize: 11, color: '#6b7280'
+      },
+      emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } },
+      itemStyle: { borderColor: '#fff', borderWidth: 3 },
+      data: [
+        { name: '畅销品', value: c.best },
+        { name: '正常品', value: c.normal },
+        { name: '滞销预警', value: c.warn },
+        { name: '滞销品', value: c.slow }
+      ]
+    }]
+  }, true);
+
+  var activeRate = total > 0 ? ((c.best + c.normal) / total * 100).toFixed(1) : '0.0';
+  var slowCount = c.warn + c.slow;
+  var rateEl = document.getElementById('kpiTurnoverRate');
+  var slowEl = document.getElementById('kpiSlowCount');
+  if (rateEl) rateEl.textContent = activeRate + '%';
+  if (slowEl) slowEl.textContent = slowCount;
+}
+
+function updateTurnoverRuleSummary() {
+  var summary = document.getElementById('turnoverRuleSummary');
+  if (!summary) return;
+  summary.innerHTML =
+    '<span class="tr-dot green"></span>畅销 ≥' + turnoverRules.best + ' &nbsp;' +
+    '<span class="tr-dot blue"></span>正常 ≥' + turnoverRules.normal + ' &nbsp;' +
+    '<span class="tr-dot amber"></span>预警 ≥' + turnoverRules.warn + ' &nbsp;' +
+    '<span class="tr-dot red"></span>滞销 &lt;' + turnoverRules.warn;
+}
+
+function openTurnoverModal() {
+  var modal = document.getElementById('turnoverModal');
+  if (!modal) return;
+  document.getElementById('modalRuleBest').value = turnoverRules.best;
+  document.getElementById('modalRuleNormal').value = turnoverRules.normal;
+  document.getElementById('modalRuleWarn').value = turnoverRules.warn;
+  modal.classList.add('show');
+}
+
+function closeTurnoverModal() {
+  var modal = document.getElementById('turnoverModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function applyTurnoverRules() {
+  var best = parseInt(document.getElementById('modalRuleBest').value) || 0;
+  var normal = parseInt(document.getElementById('modalRuleNormal').value) || 0;
+  var warn = parseInt(document.getElementById('modalRuleWarn').value) || 0;
+
+  if (best <= normal || normal <= warn || warn < 0) {
+    alert('规则阈值需满足：畅销 > 正常 > 滞销预警 ≥ 0');
+    return;
+  }
+
+  turnoverRules.best = best;
+  turnoverRules.normal = normal;
+  turnoverRules.warn = warn;
+  updateTurnoverRuleSummary();
+  closeTurnoverModal();
+  try { updateTurnoverChart(); } catch(e) {}
+  try { renderProductTable(); } catch(e) {}
+}
+
+function resetTurnoverRules() {
+  turnoverRules.best = TURNOVER_DEFAULTS.best;
+  turnoverRules.normal = TURNOVER_DEFAULTS.normal;
+  turnoverRules.warn = TURNOVER_DEFAULTS.warn;
+  document.getElementById('modalRuleBest').value = TURNOVER_DEFAULTS.best;
+  document.getElementById('modalRuleNormal').value = TURNOVER_DEFAULTS.normal;
+  document.getElementById('modalRuleWarn').value = TURNOVER_DEFAULTS.warn;
+  updateTurnoverRuleSummary();
+  closeTurnoverModal();
+  try { updateTurnoverChart(); } catch(e) {}
+  try { renderProductTable(); } catch(e) {}
+}
+
+// Click outside modal to close
+var turnoverModalEl = document.getElementById('turnoverModal');
+if (turnoverModalEl) {
+  turnoverModalEl.addEventListener('click', function(e) {
+    if (e.target === turnoverModalEl) closeTurnoverModal();
+  });
+}
+
+// --- Override SS Functions (with product-specific callbacks) ---
+var _origSelectSSOption = selectSSOption;
+selectSSOption = function(ssId, value) {
+  _origSelectSSOption(ssId, value);
+
+  if (ssId === 'projectSelect') {
+    onProjectChange(value);
+  }
+  if (ssId === 'platformSelect') {
+    selectedFilter.platform = value;
+    renderProductTable();
+  }
+  if (ssId === 'ppProjectSelect') {
+    onPPProjectChange(value);
+  }
+  if (ssId === 'ppPlatformSelect') {
+    onPPPlatformChange(value);
+  }
+};
+
+var _origClearSSValue = clearSSValue;
+clearSSValue = function(ssId, e) {
+  _origClearSSValue(ssId, e);
+
+  if (ssId === 'projectSelect') {
+    selectedFilter.project = '';
+    var platWrap = document.getElementById('platformSelect');
+    var platInput = platWrap.querySelector('.ss-input');
+    platInput.disabled = true;
+    platInput.value = '';
+    platInput.placeholder = '请先选择项目';
+    platWrap.classList.remove('has-value');
+    ssState['platformSelect'].value = '';
+    ssState['platformSelect'].options = [];
+    renderSSMenu('platformSelect');
+    selectedFilter.platform = '';
+    renderProductTable();
+  }
+  if (ssId === 'platformSelect') {
+    selectedFilter.platform = '';
+    renderProductTable();
+  }
+};
+
+// --- Product Table ---
+function onProjectChange(project) {
+  selectedFilter.project = project;
+  var platWrap = document.getElementById('platformSelect');
+  var platInput = platWrap.querySelector('.ss-input');
+
+  platInput.value = '';
+  platWrap.classList.remove('has-value');
+  ssState['platformSelect'].value = '';
+  selectedFilter.platform = '';
+
+  if (project) {
+    var platforms = projectPlatformMap[project] || [];
+    platInput.disabled = false;
+    platInput.placeholder = '选择平台';
+    initSS('platformSelect', platforms, '选择平台');
+  } else {
+    platInput.disabled = true;
+    platInput.placeholder = '请先选择项目';
+    ssState['platformSelect'].options = [];
+    renderSSMenu('platformSelect');
+  }
+  renderProductTable();
+}
+
+function switchProductView(mode, btn) {
+  productViewMode = mode;
+  document.querySelectorAll('#productViewBtns .chart-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+
+  var projSelect = document.getElementById('projectSelect');
+  var platSelect = document.getElementById('platformSelect');
+  if (mode === 'project') {
+    projSelect.style.display = '';
+    platSelect.style.display = '';
+  } else {
+    projSelect.style.display = 'none';
+    platSelect.style.display = 'none';
+  }
+  renderProductTable();
+}
+
+function renderProductTable() {
+  var thead = document.getElementById('productTableHead');
+  var tbody = document.getElementById('productTableBody');
+
+  if (productViewMode === 'order') {
+    thead.innerHTML = '<tr>'
+      + '<th style="width:40px">#</th>'
+      + '<th>商品名称</th>'
+      + '<th data-type="num">供货价</th>'
+      + '<th data-type="num">平均提报价</th>'
+      + '<th style="text-align:right" data-type="num">利润差</th>'
+      + '<th style="text-align:right" data-type="num">销量</th>'
+      + '<th style="text-align:right" data-type="num">销售额</th>'
+      + '<th>状态</th>'
+      + '</tr>';
+  } else {
+    thead.innerHTML = '<tr>'
+      + '<th style="width:40px">#</th>'
+      + '<th>商品名称</th>'
+      + '<th>项目</th>'
+      + '<th>平台</th>'
+      + '<th data-type="num">供货价</th>'
+      + '<th data-type="num">平均提报价</th>'
+      + '<th style="text-align:right" data-type="num">利润差</th>'
+      + '<th style="text-align:right" data-type="num">销量</th>'
+      + '<th style="text-align:right" data-type="num">销售额</th>'
+      + '<th>状态</th>'
+      + '</tr>';
+  }
+
+  var filtered = productData.filter(function(p) {
+    if (productViewMode === 'project') {
+      if (selectedFilter.project && p.project !== selectedFilter.project) return false;
+      if (selectedFilter.platform && p.platform !== selectedFilter.platform) return false;
+    }
+    return true;
+  });
+
+  var displayData = filtered.slice(0, 10);
+  var colCount = productViewMode === 'order' ? 8 : 10;
+
+  if (displayData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align:center;padding:40px;color:#9ca3af;">暂无商品数据</td></tr>';
+  } else {
+    var html = '';
+    displayData.forEach(function(p, i) {
+      var diff = p.quote - p.supply;
+      var diffStr = '¥' + diff.toLocaleString();
+      var diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+      var revenue = p.sales * p.quote;
+      var status = getProductStatus(p.sales);
+      html += '<tr>';
+      html += '<td><strong>' + (i + 1) + '</strong></td>';
+      html += '<td>' + (i < 3 ? '<span class="highlight">' + p.name + '</span>' : p.name) + '</td>';
+      if (productViewMode === 'project') {
+        html += '<td><span class="tag tag-blue">' + p.project + '</span></td>';
+        html += '<td>' + p.platform + '</td>';
+      }
+      html += '<td>¥' + p.supply.toLocaleString() + '</td>';
+      html += '<td>¥' + p.quote.toLocaleString() + '</td>';
+      html += '<td style="text-align:right;color:' + diffColor + ';font-weight:600">' + diffStr + '</td>';
+      html += '<td style="text-align:right">' + p.sales.toLocaleString() + '</td>';
+      html += '<td style="text-align:right">¥' + revenue.toLocaleString() + '</td>';
+      html += '<td><span class="tag ' + status.cls + '">' + status.text + '</span></td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  pagState['productTable'] = { page: 1, pageSize: 10, asc: false };
+  renderPagination('productTable');
+}
+
+function initProductSelects() {
+  var projects = Object.keys(projectPlatformMap).sort();
+  initSS('projectSelect', projects, '选择项目');
+  initSS('platformSelect', [], '请先选择项目');
+}
+
+// ===== Price Analysis =====
+var priceProducts = [
+  {id:'p1', name:'华为Mate 60 Pro', supply:5299, quotes:{'军网':{'领先未来':6999,'邦威':7199},'政企集采':{'中科信息':6799,'领先未来':6899},'教育采购':{'华教通':7099}}},
+  {id:'p2', name:'小米14 Ultra', supply:3499, quotes:{'军网':{'领先未来':4999,'邦威':5199},'政企集采':{'中科信息':4799}}},
+  {id:'p3', name:'MacBook Air M3', supply:6499, quotes:{'政企集采':{'中科信息':8999,'领先未来':8799},'军网':{'邦威':9199}}},
+  {id:'p4', name:'戴森V15 Detect', supply:2990, quotes:{'政企集采':{'领先未来':4490,'中科信息':4390},'军网':{'领先未来':4590}}},
+  {id:'p5', name:'华为FreeBuds Pro 3', supply:699, quotes:{'教育采购':{'华教通':1099},'军网':{'领先未来':999,'邦威':1049}}},
+  {id:'p6', name:'联想ThinkPad X1', supply:7299, quotes:{'政企集采':{'中科信息':9999,'领先未来':9799}}},
+  {id:'p7', name:'罗技MX Master 3S', supply:499, quotes:{'企业团购':{'优采':799,'企服通':749},'军网':{'邦威':849}}},
+  {id:'p8', name:'华为超级快充', supply:129, quotes:{'政企集采':{'领先未来':199},'军网':{'邦威':189},'企业团购':{'优采':179}}},
+  {id:'p9', name:'三星Galaxy Buds', supply:599, quotes:{'教育采购':{'华教通':499},'军网':{'领先未来':549}}},
+  {id:'p10', name:'小米手环8 Pro', supply:199, quotes:{'企业团购':{'优采':169,'企服通':159},'教育采购':{'华教通':179}}},
+  {id:'p11', name:'iPad Air M2', supply:3999, quotes:{'教育采购':{'华教通':5499},'政企集采':{'中科信息':5299}}},
+  {id:'p12', name:'索尼WH-1000XM5', supply:1899, quotes:{'军网':{'邦威':1799,'领先未来':1899},'政企集采':{'中科信息':2099}}}
+];
+var pricePP = { project: '', platform: '' };
+
+function getPriceQuote(product) {
+  if (!pricePP.project || !pricePP.platform) return product.supply;
+  var projQuotes = product.quotes[pricePP.project];
+  if (!projQuotes) return null;
+  return projQuotes[pricePP.platform] || null;
+}
+
+function getFilteredPriceProducts() {
+  if (!pricePP.project || !pricePP.platform) return [];
+  return priceProducts.filter(function(p) {
+    return p.quotes[pricePP.project] && p.quotes[pricePP.project][pricePP.platform] !== undefined;
+  });
+}
+var selectedProducts = [];
+var activeDetailId = null;
+
+function initPricePanel() {
+  var projects = [];
+  priceProducts.forEach(function(p) {
+    Object.keys(p.quotes).forEach(function(proj) {
+      if (projects.indexOf(proj) === -1) projects.push(proj);
+    });
+  });
+  initSS('ppProjectSelect', projects, '选择项目');
+  initSS('ppPlatformSelect', [], '请先选择项目');
+
+  if (projects.length > 0) {
+    var defProject = projects[0];
+    var platforms = [];
+    priceProducts.forEach(function(p) {
+      if (p.quotes[defProject]) {
+        Object.keys(p.quotes[defProject]).forEach(function(plat) {
+          if (platforms.indexOf(plat) === -1) platforms.push(plat);
+        });
+      }
+    });
+    selectSSOption('ppProjectSelect', defProject);
+    initSS('ppPlatformSelect', platforms, '选择平台');
+    if (platforms.length > 0) {
+      selectSSOption('ppPlatformSelect', platforms[0]);
+    }
+    pricePP.project = defProject;
+    pricePP.platform = platforms[0] || '';
+  }
+
+  renderPriceLineChart();
+}
+
+function onPPProjectChange(project) {
+  pricePP.project = project;
+  pricePP.platform = '';
+  selectedProducts = [];
+
+  var searchInput = document.getElementById('ppSearchInput');
+  searchInput.disabled = true;
+  searchInput.value = '';
+  searchInput.placeholder = project ? '请先选择平台' : '请先选择项目和平台';
+
+  var platforms = [];
+  priceProducts.forEach(function(p) {
+    if (p.quotes[project]) {
+      Object.keys(p.quotes[project]).forEach(function(plat) {
+        if (platforms.indexOf(plat) === -1) platforms.push(plat);
+      });
+    }
+  });
+
+  var platWrap = document.getElementById('ppPlatformSelect');
+  var platInput = platWrap.querySelector('.ss-input');
+  if (project) {
+    platInput.disabled = false;
+    platInput.placeholder = '选择平台';
+    initSS('ppPlatformSelect', platforms, '选择平台');
+  } else {
+    platInput.disabled = true;
+    platInput.placeholder = '请先选择项目';
+    ssState['ppPlatformSelect'].options = [];
+    renderSSMenu('ppPlatformSelect');
+  }
+
+  renderSelectedTags();
+  renderPriceLineChart();
+}
+
+function onPPPlatformChange(platform) {
+  pricePP.platform = platform;
+  selectedProducts = [];
+
+  var searchInput = document.getElementById('ppSearchInput');
+  if (platform) {
+    searchInput.disabled = false;
+    searchInput.value = '';
+    searchInput.placeholder = '搜索商品名称...';
+    var available = getFilteredPriceProducts();
+    selectedProducts = available.map(function(p) { return p.id; });
+  } else {
+    searchInput.disabled = true;
+    searchInput.value = '';
+    searchInput.placeholder = '请先选择平台';
+    selectedProducts = [];
+  }
+
+  renderPriceLineChart();
+}
+
+function clearPPProject(e) {
+  e.stopPropagation();
+  ssState['ppProjectSelect'].value = '';
+  var input = document.querySelector('#ppProjectSelect .ss-input');
+  input.value = '';
+  document.getElementById('ppProjectSelect').classList.remove('has-value');
+  onPPProjectChange('');
+}
+
+function clearPPPlatform(e) {
+  e.stopPropagation();
+  ssState['ppPlatformSelect'].value = '';
+  var input = document.querySelector('#ppPlatformSelect .ss-input');
+  input.value = '';
+  document.getElementById('ppPlatformSelect').classList.remove('has-value');
+  onPPPlatformChange('');
+}
+
+function onPriceSearchFocus() {
+  var keyword = document.getElementById('ppSearchInput').value;
+  renderDropdown(keyword);
+  document.getElementById('ppDropdown').classList.add('show');
+}
+
+function onPriceSearchBlur() {
+  setTimeout(function() {
+    document.getElementById('ppDropdown').classList.remove('show');
+  }, 200);
+}
+
+function renderDropdown(filter) {
+  var dropdown = document.getElementById('ppDropdown');
+  var keyword = (filter || '').toLowerCase();
+  if (!pricePP.project || !pricePP.platform) {
+    dropdown.innerHTML = '<div class="pp-empty">请先选择项目和平台</div>';
+    return;
+  }
+  var available = getFilteredPriceProducts();
+  var filtered = keyword ? available.filter(function(p) {
+    return p.name.toLowerCase().indexOf(keyword) > -1;
+  }) : available;
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div class="pp-empty">未找到匹配商品</div>';
+    return;
+  }
+  var html = '';
+  filtered.forEach(function(p) {
+    var isChecked = selectedProducts.indexOf(p.id) > -1;
+    var cls = 'pp-item' + (isChecked ? ' checked' : '');
+    var quote = getPriceQuote(p);
+    var diff = quote - p.supply;
+    var diffStr = (diff >= 0 ? '+' : '') + '¥' + diff.toLocaleString();
+    var diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+    html += '<div class="' + cls + '" onmousedown="event.preventDefault();togglePriceProduct(\'' + p.id + '\')">'
+      + '<input type="checkbox"' + (isChecked ? ' checked' : '') + ' tabindex="-1">'
+      + '<span class="pp-name">' + p.name + '</span>'
+      + '<span class="pp-prices"><span>供¥' + p.supply.toLocaleString() + '</span><span>提¥' + quote.toLocaleString() + '</span><span style="color:' + diffColor + ';font-weight:500">' + diffStr + '</span></span>'
+      + '</div>';
+  });
+  dropdown.innerHTML = html;
+}
+
+function renderSelectedTags() {
+  // Tags UI removed - no-op
+}
+
+function toggleTagDetail() {
+  // Tags UI removed - no-op
+}
+
+function togglePriceProduct(id) {
+  var idx = selectedProducts.indexOf(id);
+  if (idx > -1) {
+    selectedProducts.splice(idx, 1);
+  } else {
+    selectedProducts.push(id);
+  }
+  var searchVal = document.getElementById('ppSearchInput').value;
+  renderDropdown(searchVal);
+  renderPriceLineChart();
+}
+
+function filterPriceProducts() {
+  var keyword = document.getElementById('ppSearchInput').value;
+  renderDropdown(keyword);
+  document.getElementById('ppDropdown').classList.add('show');
+}
+
+function renderPriceLineChart() {
+  var items = priceProducts.filter(function(p){return selectedProducts.indexOf(p.id) > -1;});
+  if (items.length === 0) {
+    chartPriceAnalysis.clear();
+    chartPriceAnalysis.setOption({
+      title: { text: '请选择至少一个商品', left: 'center', top: 'center', textStyle: { color: '#9ca3af', fontSize: 14, fontWeight: 'normal' } }
+    });
+    return;
+  }
+
+  var names = items.map(function(p){ return p.name.length > 8 ? p.name.slice(0,8)+'..' : p.name; });
+  var supplyData = items.map(function(p){ return p.supply; });
+  var quoteData = items.map(function(p){ return getPriceQuote(p); });
+
+  var areaData = [];
+  for (var i = 0; i < items.length - 1; i++) {
+    var q1 = getPriceQuote(items[i]);
+    var q2 = getPriceQuote(items[i+1]);
+    var diff1 = q1 - items[i].supply;
+    var diff2 = q2 - items[i+1].supply;
+    var isPositive = (diff1 >= 0 && diff2 >= 0);
+    areaData.push([
+      { xAxis: names[i], itemStyle: { color: isPositive ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)' } },
+      { xAxis: names[i + 1] }
+    ]);
+  }
+
+  var ppLabel = pricePP.project && pricePP.platform ? (pricePP.project + ' / ' + pricePP.platform) : '';
+
+  chartPriceAnalysis.setOption({
+    tooltip: {
+      trigger: 'axis',
+      ...tooltipStyle,
+      formatter: function(params) {
+        var idx = params[0].dataIndex;
+        var p = items[idx];
+        var quote = getPriceQuote(p);
+        var diff = quote - p.supply;
+        var diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+        var diffText = (diff >= 0 ? '+' : '') + '¥' + diff.toLocaleString();
+        return '<strong>' + p.name + '</strong>' + (ppLabel ? '<br/><span style="color:#9ca3af;font-size:11px">' + ppLabel + '</span>' : '') + '<br/>'
+          + '<span style="color:#3b82f6">供货价: ¥' + p.supply.toLocaleString() + '</span><br/>'
+          + '<span style="color:#f97316">提报价: ¥' + quote.toLocaleString() + '</span><br/>'
+          + '<span style="color:' + diffColor + '">利润差: ' + diffText + '</span>';
+      }
+    },
+    grid: { left: 60, right: 20, top: 20, bottom: 40 },
+    xAxis: { type: 'category', data: names, axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 11, rotate: items.length > 5 ? 20 : 0 }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af', formatter: '¥{value}' } },
+    series: [
+      {
+        name: '供货价', type: 'line', data: supplyData,
+        lineStyle: { color: COLORS.blue, width: 2.5 },
+        itemStyle: { color: COLORS.blue },
+        symbolSize: 8, symbol: 'circle'
+      },
+      {
+        name: '提报价', type: 'line', data: quoteData,
+        lineStyle: { color: COLORS.amber, width: 2.5 },
+        itemStyle: { color: COLORS.amber },
+        symbolSize: 8, symbol: 'circle',
+        markArea: { silent: true, data: areaData }
+      }
+    ]
+  }, true);
+}
+
+// ===== Init Charts =====
+function initCharts() {
+  if (typeof echarts === 'undefined') { console.error('ECharts library not loaded'); return; }
+  try {
+    chartTurnover = echarts.init(document.getElementById('chartTurnover'));
+    updateTurnoverChart();
+
+    chartPriceAnalysis = echarts.init(document.getElementById('chartPriceAnalysis'));
+  } catch(e) { console.error('Chart init error:', e); }
+}
+
+// ===== Init =====
+initCharts();
+initProductSelects();
+renderProductTable();
+initPricePanel();
+
+// Window resize handler
+window.addEventListener('resize', function() {
+  [chartTurnover, chartPriceAnalysis].forEach(function(c) {
+    try { if (c) c.resize(); } catch(e) {}
+  });
+});
+</script>
+</body>
+</html>

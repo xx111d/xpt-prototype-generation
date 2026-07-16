@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商家端 - 订单分析</title>
+<link rel="stylesheet" href="common.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>if(typeof echarts==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"><\/script>');}</script>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar container (filled by common.js) -->
+  <div id="sidebar-container"></div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Header container (filled by common.js) -->
+    <div id="header-container"></div>
+
+    <div class="content">
+      <!-- Toolbar: Time Pills -->
+      <div class="toolbar">
+        <div class="time-pills">
+          <div class="time-pill" data-range="week" onclick="selectPill(this)">近七天</div>
+          <div class="time-pill" data-range="month" onclick="selectPill(this)">本月</div>
+          <div class="time-pill active" data-range="quarter" onclick="selectPill(this)">本季度</div>
+          <div class="time-pill" data-range="custom" onclick="selectPill(this)">自定义</div>
+        </div>
+        <div class="date-range" id="customDateWrap" style="display:none;">
+          <input type="date" id="dateStart" value="2026-01-01">
+          <span style="color:#9ca3af">~</span>
+          <input type="date" id="dateEnd" value="2026-06-30">
+          <button class="btn-apply" onclick="refresh()">查 询</button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card blue">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">总订单量</div>
+              <div class="kpi-value" id="kv-t2orders">3,264</div>
+              <div class="kpi-change up" id="kc-t2orders">↑ 12.3%</div>
+            </div>
+            <div class="kpi-icon">📋</div>
+          </div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">项目单订单</div>
+              <div class="kpi-value" id="kv-t2proj">1,892</div>
+            </div>
+            <div class="kpi-icon">🏢</div>
+          </div>
+          <div class="kpi-sub" id="ks-t2proj">占比 58.0%</div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">自然单订单</div>
+              <div class="kpi-value" id="kv-t2nat">1,372</div>
+            </div>
+            <div class="kpi-icon">👤</div>
+          </div>
+          <div class="kpi-sub" id="ks-t2nat">占比 42.0%</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-top">
+            <div>
+              <div class="kpi-label">平均订单金额</div>
+              <div class="kpi-value" id="kv-t2avg">¥3,210</div>
+              <div class="kpi-change up" id="kc-t2avg">↑ ¥180</div>
+            </div>
+            <div class="kpi-icon">💰</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Project Statistics -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">项目统计</div>
+          </div>
+          <div style="padding:0 24px 12px;">
+            <div class="project-select" id="projectOrderSelect">
+              <div class="ps-trigger" onclick="toggleProjectSelect()">
+                <span id="psLabel">默认 5 个项目</span>
+              </div>
+              <span class="ps-arrow">▾</span>
+              <div class="ps-menu" id="psMenu">
+                <div class="ps-search-wrap">
+                  <input type="text" placeholder="搜索项目..." oninput="filterProjectOptions(this.value)" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+                </div>
+                <div id="psOptions"></div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-body" id="chartOrderProject" style="height:260px;"></div>
+        </div>
+
+        <!-- Order Distribution -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">订单分布</div>
+            <div style="font-size:12px;color:#9ca3af;">统计维度：自然单 / 项目单</div>
+          </div>
+          <div class="chart-body" id="chartOrderType" style="height:300px;"></div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">订单明细（最近30天）</div>
+          <div class="chart-actions">
+            <div class="chart-btn" onclick="refresh()">刷新</div>
+          </div>
+        </div>
+        <div class="table-toolbar">
+          <div class="tb-left">
+            <button class="tb-btn" onclick="toggleSort('orderTable')" id="orderTable-sort-btn">⇅ 倒序</button>
+          </div>
+          <div class="tb-right">
+            <button class="tb-btn export-btn" onclick="exportTable('orderTable','订单明细')">↓ 导出 Excel</button>
+          </div>
+        </div>
+        <table class="data-table" id="orderTable">
+          <thead>
+            <tr>
+              <th>订单编号</th>
+              <th>租户名称</th>
+              <th>订单类型</th>
+              <th>关联项目</th>
+              <th style="text-align:right" data-type="num">订单金额</th>
+              <th>状态</th>
+              <th data-type="date">下单时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="highlight">DD20260624150826</span></td><td>星辰数码科技</td><td><span class="tag tag-blue">项目单</span></td><td>政企集采项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥8,299</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-24 15:08</td></tr>
+            <tr><td><span class="highlight">DD20260624143055</span></td><td>星辰数码科技</td><td><span class="tag tag-blue">项目单</span></td><td>政企集采项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥6,499</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-24 14:30</td></tr>
+            <tr><td><span class="highlight">DD20260624120010</span></td><td>明远教育集团</td><td><span class="tag tag-green">自然单</span></td><td>教育采购专项</td><td style="text-align:right;color:#1f2937;font-weight:600">¥356</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-24 12:00</td></tr>
+            <tr><td><span class="highlight">DD20260623182200</span></td><td>锦绣服饰贸易</td><td><span class="tag tag-blue">项目单</span></td><td>企业团购项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥596</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-23 18:22</td></tr>
+            <tr><td><span class="highlight">DD20260623160530</span></td><td>星辰数码科技</td><td><span class="tag tag-blue">项目单</span></td><td>政企集采项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥9,499</td><td><span class="tag tag-orange">待支付</span></td><td>2026-06-23 16:05</td></tr>
+            <tr><td><span class="highlight">DD20260623141000</span></td><td>明远教育集团</td><td><span class="tag tag-green">自然单</span></td><td>教育采购专项</td><td style="text-align:right;color:#1f2937;font-weight:600">¥468</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-23 14:10</td></tr>
+          </tbody>
+        </table>
+        <div class="table-pagination" id="orderTable-pag"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.MERCHANT_PAGE = 'order';
+</script>
+<script src="common.js"></script>
+<script>
+// ===== Warm Dashboard Color Palette =====
+var COLORS = {
+  rose: '#e11d48',
+  blue: '#3b82f6',
+  amber: '#f59e0b',
+  green: '#22c55e',
+  purple: '#a855f7',
+  teal: '#14b8a6',
+  red: '#ef4444'
+};
+
+// ===== Time Pill Selection =====
+function selectPill(el) {
+  document.querySelectorAll('.time-pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  var range = el.getAttribute('data-range');
+  var wrap = document.getElementById('customDateWrap');
+  if (wrap) wrap.style.display = (range === 'custom') ? 'flex' : 'none';
+  updateDashboard(range);
+}
+
+// ===== Mock Data per Time Range =====
+var rangeData = {
+  week: {
+    t2orders: '468', t2ordersChange: '↑ 8.7%', t2ordersChangeCls: 'up',
+    t2proj: '276', t2projSub: '占比 59.0%',
+    t2nat: '192', t2natSub: '占比 41.0%',
+    t2avg: '¥3,966', t2avgChange: '↑ ¥210', t2avgChangeCls: 'up'
+  },
+  month: {
+    t2orders: '1,356', t2ordersChange: '↑ 10.8%', t2ordersChangeCls: 'up',
+    t2proj: '792', t2projSub: '占比 58.4%',
+    t2nat: '564', t2natSub: '占比 41.6%',
+    t2avg: '¥4,001', t2avgChange: '↑ ¥156', t2avgChangeCls: 'up'
+  },
+  quarter: {
+    t2orders: '3,264', t2ordersChange: '↑ 12.3%', t2ordersChangeCls: 'up',
+    t2proj: '1,892', t2projSub: '占比 58.0%',
+    t2nat: '1,372', t2natSub: '占比 42.0%',
+    t2avg: '¥3,210', t2avgChange: '↑ ¥180', t2avgChangeCls: 'up'
+  }
+};
+
+function updateDashboard(range) {
+  var d = rangeData[range];
+  if (!d) { d = rangeData.quarter; }
+
+  var set = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+  set('kv-t2orders', d.t2orders);
+  var kcT2O = document.getElementById('kc-t2orders');
+  if (kcT2O) { kcT2O.textContent = d.t2ordersChange; kcT2O.className = 'kpi-change ' + d.t2ordersChangeCls; }
+  set('kv-t2proj', d.t2proj);
+  set('ks-t2proj', d.t2projSub);
+  set('kv-t2nat', d.t2nat);
+  set('ks-t2nat', d.t2natSub);
+  set('kv-t2avg', d.t2avg);
+  var kcT2A = document.getElementById('kc-t2avg');
+  if (kcT2A) { kcT2A.textContent = d.t2avgChange; kcT2A.className = 'kpi-change ' + d.t2avgChangeCls; }
+}
+
+function refresh() {
+  var activePill = document.querySelector('.time-pill.active');
+  var range = activePill ? activePill.getAttribute('data-range') : 'quarter';
+  updateDashboard(range);
+}
+
+// ===== ECharts Initialization =====
+var chartOrderProject, chartOrderType;
+
+var tooltipStyle = {
+  backgroundColor: 'rgba(255,255,255,.98)',
+  borderColor: '#f3f4f6',
+  borderWidth: 1,
+  textStyle: { color: '#1f2937', fontSize: 13 },
+  extraCssText: 'box-shadow:0 4px 20px rgba(0,0,0,.1);border-radius:10px;'
+};
+
+// ===== Project Statistics - Multi-Select =====
+var projectOrderData = [
+  { name: '政企集采项目', orders: 680 },
+  { name: '教育采购专项', orders: 456 },
+  { name: '企业团购项目', orders: 380 },
+  { name: '政府补贴项目', orders: 376 },
+  { name: '军网采购项目', orders: 320 },
+  { name: '央企集采项目', orders: 288 },
+  { name: '医疗采购项目', orders: 245 },
+  { name: '金融集采项目', orders: 198 },
+  { name: '能源采购项目', orders: 165 },
+  { name: '交通集采项目', orders: 156 }
+];
+
+var psState = {
+  allProjects: projectOrderData.map(function(p) { return p.name; }),
+  selected: projectOrderData.slice(0, 5).map(function(p) { return p.name; })
+};
+
+function renderPSOptions(filter) {
+  var container = document.getElementById('psOptions');
+  var keyword = (filter || '').toLowerCase();
+  var html = '';
+  psState.allProjects.forEach(function(name) {
+    var checked = psState.selected.indexOf(name) !== -1;
+    var hidden = keyword && name.toLowerCase().indexOf(keyword) === -1;
+    var orderItem = projectOrderData.find(function(p) { return p.name === name; });
+    html += '<div class="ps-option' + (checked ? ' checked' : '') + (hidden ? ' hidden' : '') + '" data-name="' + name + '" onmousedown="event.preventDefault()" onclick="togglePSOption(\'' + name + '\')">';
+    html += '<span class="ps-check">✓</span>';
+    html += '<span style="flex:1">' + name + '</span>';
+    html += '<span class="ps-count">' + orderItem.orders + ' 单</span>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function toggleProjectSelect() {
+  var el = document.getElementById('projectOrderSelect');
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) {
+    var searchInput = el.querySelector('.ps-search-wrap input');
+    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+    renderPSOptions('');
+  }
+}
+
+function filterProjectOptions(keyword) {
+  var options = document.querySelectorAll('#psOptions .ps-option');
+  var kw = keyword.toLowerCase();
+  options.forEach(function(opt) {
+    var name = opt.getAttribute('data-name');
+    opt.classList.toggle('hidden', kw.length > 0 && name.toLowerCase().indexOf(kw) === -1);
+  });
+}
+
+function togglePSOption(name) {
+  var idx = psState.selected.indexOf(name);
+  if (idx !== -1) {
+    psState.selected.splice(idx, 1);
+  } else {
+    psState.selected.push(name);
+  }
+  var opt = document.querySelector('#psOptions .ps-option[data-name="' + name + '"]');
+  if (opt) opt.classList.toggle('checked');
+  updatePSLabel();
+  updateProjectChart();
+}
+
+function updatePSLabel() {
+  var label = document.getElementById('psLabel');
+  var count = psState.selected.length;
+  if (count === 0) {
+    label.textContent = '请选择项目';
+    label.style.color = '#9ca3af';
+  } else if (count === psState.allProjects.length) {
+    label.textContent = '全部项目 (' + count + ')';
+    label.style.color = '#e11d48';
+  } else {
+    label.textContent = '已选 ' + count + ' 个项目';
+    label.style.color = '#e11d48';
+  }
+}
+
+function updateProjectChart() {
+  var chartColors = ['#e11d48', '#3b82f6', '#f59e0b', '#a855f7', '#14b8a6', '#22c55e', '#ef4444', '#6366f1', '#ec4899', '#0ea5e9'];
+  var filtered = projectOrderData.filter(function(p) {
+    return psState.selected.indexOf(p.name) !== -1;
+  });
+  chartOrderProject.setOption({
+    tooltip: { trigger: 'axis', formatter: '{b}: {c} 单', ...tooltipStyle },
+    grid: { left: 50, right: 20, top: 20, bottom: 60 },
+    xAxis: { type: 'category', data: filtered.map(function(p) { return p.name; }), axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 11, rotate: filtered.length > 5 ? 20 : 0 }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af' } },
+    series: [{
+      type: 'bar', barWidth: '40%',
+      data: filtered.map(function(p, i) {
+        return { value: p.orders, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:chartColors[i % chartColors.length]},{offset:1,color:chartColors[i % chartColors.length] + 'cc'}]) } };
+      }),
+      label: { show: true, position: 'top', fontSize: 11, color: '#6b7280', fontWeight: 600 },
+      itemStyle: { borderRadius: [6, 6, 0, 0] }
+    }]
+  });
+}
+
+function initAllCharts() {
+  try {
+    // Project Statistics Bar Chart
+    chartOrderProject = echarts.init(document.getElementById('chartOrderProject'));
+    updateProjectChart();
+
+    // Order Distribution Pie Chart
+    chartOrderType = echarts.init(document.getElementById('chartOrderType'));
+    chartOrderType.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: {c} 单 ({d}%)', ...tooltipStyle },
+      legend: { bottom: 10, textStyle: { fontSize: 13, color: '#374151' }, itemWidth: 12, itemHeight: 12, itemGap: 20 },
+      color: [COLORS.teal, COLORS.rose],
+      series: [{
+        type: 'pie', radius: ['42%', '72%'], center: ['50%', '45%'],
+        label: { show: true, formatter: '{b}\n{d}%', fontSize: 12, color: '#374151', lineHeight: 18 },
+        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+        itemStyle: { borderColor: '#fff', borderWidth: 3 },
+        data: [
+          { name: '自然单', value: 1372 },
+          { name: '项目单', value: 1892 }
+        ]
+      }]
+    });
+  } catch(e) { console.error('Chart init error:', e); }
+}
+
+// Init charts on load
+initAllCharts();
+
+// Window resize handler
+window.addEventListener('resize', function() {
+  [chartOrderProject, chartOrderType].forEach(function(c) {
+    try { if (c) c.resize(); } catch(e) {}
+  });
+});
+
+// ===== Init table pagination =====
+try { initPagination('orderTable', 5); } catch(e) { console.error('initPagination orderTable error:', e); }
+try { renderPSOptions(''); } catch(e) { console.error('renderPSOptions error:', e); }
+</script>
+
+</body>
+</html>

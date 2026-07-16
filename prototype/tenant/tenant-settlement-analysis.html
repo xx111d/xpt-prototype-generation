@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>租户端 - 结算分析</title>
+<link rel="stylesheet" href="common.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+  window.TENANT_PAGE = 'settlement';
+</script>
+<script src="common.js"></script>
+</head>
+<body>
+
+<div id="sidebar-container"></div>
+
+<div class="main">
+  <div id="header-container"></div>
+
+  <div class="container">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <label>&#128197; 时间范围</label>
+      <select id="filter-period" onchange="onPeriodChange()">
+        <option value="month">本月</option>
+        <option value="quarter" selected>本季度</option>
+        <option value="half">近半年</option>
+        <option value="year">近一年</option>
+        <option value="custom">自定义</option>
+      </select>
+      <span id="custom-date-range" style="display:none;align-items:center;gap:0.5rem;">
+        <input type="date" id="custom-start" onchange="onCustomDateChange()" style="padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));">
+        <span style="color:hsl(var(--muted-foreground));font-size:0.8125rem;">至</span>
+        <input type="date" id="custom-end" onchange="onCustomDateChange()" style="padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));">
+      </span>
+    </div>
+
+    <!-- ========== 结算分析 ========== -->
+    <div class="tab-content" id="tab-settlement">
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">各项目结算占比</div>
+          <div class="chart-subtitle">按结算金额统计（本季度）</div>
+          <div class="chart-box" id="chart-settlement-pie"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">结算金额趋势</div>
+          <div class="chart-subtitle" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <span>各项目月度结算金额变化</span>
+            <div class="brand-select-wrapper" id="trend-project-select-wrapper">
+              <button class="brand-select-trigger" onclick="toggleTrendProjectDropdown()">
+                <span id="trend-project-select-text">全部项目</span>
+                <span class="arrow">&#9662;</span>
+              </button>
+              <div class="brand-dropdown" id="trend-project-dropdown" style="display:none;">
+                <label class="brand-option"><input type="checkbox" value="all" checked onchange="toggleAllTrendProjects(this)"> 全选</label>
+                <label class="brand-option" data-brand="军网采购"><input type="checkbox" value="军网采购" checked onchange="onTrendProjectChange()"> 军网采购</label>
+                <label class="brand-option" data-brand="国网供应链"><input type="checkbox" value="国网供应链" checked onchange="onTrendProjectChange()"> 国网供应链</label>
+                <label class="brand-option" data-brand="政采云平台"><input type="checkbox" value="政采云平台" checked onchange="onTrendProjectChange()"> 政采云平台</label>
+                <label class="brand-option" data-brand="央采商城"><input type="checkbox" value="央采商城" checked onchange="onTrendProjectChange()"> 央采商城</label>
+                <label class="brand-option" data-brand="中航工业集采"><input type="checkbox" value="中航工业集采" checked onchange="onTrendProjectChange()"> 中航工业集采</label>
+                <label class="brand-option" data-brand="中铁物资采购"><input type="checkbox" value="中铁物资采购" checked onchange="onTrendProjectChange()"> 中铁物资采购</label>
+              </div>
+            </div>
+          </div>
+          <div class="chart-box" id="chart-settlement-trend"></div>
+        </div>
+      </div>
+
+      <!-- 结算明细表 -->
+      <div class="chart-card" style="margin-top:1rem;">
+        <div class="table-toolbar">
+          <div class="chart-title" style="margin-bottom:0;">结算明细汇总</div>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span class="toggle-group">
+              <button class="toggle-btn active" onclick="switchSettlementPeriod('week', this)">按周</button>
+              <button class="toggle-btn" onclick="switchSettlementPeriod('month', this)">按月</button>
+              <button class="toggle-btn" onclick="switchSettlementPeriod('quarter', this)">按季度</button>
+              <button class="toggle-btn" onclick="switchSettlementPeriod('year', this)">按年</button>
+            </span>
+            <button class="btn-export" onclick="exportTable('table-settlement', '结算明细汇总')">&#128229; 导出 Excel</button>
+          </div>
+        </div>
+        <div class="chart-subtitle" id="settlement-table-subtitle">各项目本季度结算金额明细</div>
+        <table class="data-table" id="table-settlement">
+          <thead>
+            <tr>
+              <th>排名</th>
+              <th>项目名称</th>
+              <th>结算金额</th>
+              <th>结算单数</th>
+              <th>占比</th>
+              <th>同比变化</th>
+            </tr>
+          </thead>
+          <tbody id="settlement-table-body">
+            <tr><td class="rank">1</td><td>军网采购</td><td>¥ 386,500</td><td>142</td><td>30.5%</td><td class="up">&#8593; 12.3%</td></tr>
+            <tr><td class="rank">2</td><td>国网供应链</td><td>¥ 268,300</td><td>98</td><td>21.2%</td><td class="up">&#8593; 8.7%</td></tr>
+            <tr><td class="rank">3</td><td>政采云平台</td><td>¥ 215,800</td><td>87</td><td>17.0%</td><td class="up">&#8593; 5.2%</td></tr>
+            <tr><td class="rank">4</td><td>央采商城</td><td>¥ 156,200</td><td>65</td><td>12.3%</td><td class="down">&#8595; 3.1%</td></tr>
+            <tr><td class="rank">5</td><td>中航工业集采</td><td>¥ 128,600</td><td>53</td><td>10.1%</td><td class="up">&#8593; 15.6%</td></tr>
+            <tr><td class="rank">6</td><td>中铁物资采购</td><td>¥ 112,400</td><td>48</td><td>8.9%</td><td class="down">&#8595; 2.5%</td></tr>
+          </tbody>
+        </table>
+        <div class="pagination" id="pagination-settlement"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div id="mobile-nav-container"></div>
+
+<script>
+// ============ 结算分析图表 ============
+var projectNames = ['军网采购', '国网供应链', '政采云平台', '央采商城', '中航工业集采', '中铁物资采购'];
+var projectColors = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899'];
+
+function renderSettlement() {
+  // 各项目结算占比 - 饼图
+  var pieDom = document.getElementById('chart-settlement-pie');
+  if (pieDom) {
+    var pieChart = echarts.getInstanceByDom(pieDom);
+    if (pieChart) pieChart.dispose();
+    pieChart = echarts.init(pieDom);
+    pieChart.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
+      legend: { bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 12 } },
+      color: projectColors,
+      series: [{
+        type: 'pie',
+        radius: ['45%', '72%'],
+        center: ['50%', '43%'],
+        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+        label: { show: true, formatter: '{b}\n{d}%', fontSize: 11 },
+        emphasis: { label: { fontSize: 14, fontWeight: 'bold' } },
+        data: [
+          { value: 386500, name: '军网采购' },
+          { value: 268300, name: '国网供应链' },
+          { value: 215800, name: '政采云平台' },
+          { value: 156200, name: '央采商城' },
+          { value: 128600, name: '中航工业集采' },
+          { value: 112400, name: '中铁物资采购' }
+        ]
+      }]
+    }, true);
+  }
+
+  // 结算金额趋势 - 折线图
+  renderTrendChart();
+}
+
+// ============ 趋势图项目选择 ============
+function toggleTrendProjectDropdown() {
+  var dd = document.getElementById('trend-project-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleAllTrendProjects(cb) {
+  var checks = document.querySelectorAll('#trend-project-dropdown input[type="checkbox"]');
+  for (var i = 1; i < checks.length; i++) {
+    checks[i].checked = cb.checked;
+  }
+  onTrendProjectChange();
+}
+
+function onTrendProjectChange() {
+  var checks = document.querySelectorAll('#trend-project-dropdown input[type="checkbox"]');
+  var selected = [];
+  var allChecked = true;
+  for (var i = 1; i < checks.length; i++) {
+    if (checks[i].checked) { selected.push(checks[i].value); }
+    else { allChecked = false; }
+  }
+  checks[0].checked = allChecked;
+  var text = selected.length === 0 ? '请选择项目' : (allChecked ? '全部项目' : '已选 ' + selected.length + ' 个项目');
+  document.getElementById('trend-project-select-text').textContent = text;
+  renderTrendChart();
+}
+
+// Click-outside to close dropdowns
+document.addEventListener('click', function(e) {
+  var wrappers = ['trend-project-select-wrapper'];
+  var dropdowns = ['trend-project-dropdown'];
+  for (var i = 0; i < wrappers.length; i++) {
+    var wrapper = document.getElementById(wrappers[i]);
+    if (wrapper && !wrapper.contains(e.target)) {
+      var dd = document.getElementById(dropdowns[i]);
+      if (dd) dd.style.display = 'none';
+    }
+  }
+});
+
+// ============ 结算趋势图（12个月） ============
+function renderTrendChart() {
+  var dom = document.getElementById('chart-settlement-trend');
+  if (!dom) return;
+  var chart = echarts.getInstanceByDom(dom);
+  if (chart) chart.dispose();
+  chart = echarts.init(dom);
+
+  // 12个月数据
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var allTrendData = {
+    '军网采购': [105000, 112000, 118000, 128000, 132000, 136500, 142000, 138000, 145000, 150000, 155000, 162000],
+    '国网供应链': [72000, 78000, 82000, 88000, 91000, 95300, 98000, 102000, 105000, 108000, 112000, 118000],
+    '政采云平台': [55000, 60000, 65000, 70000, 72000, 78800, 82000, 85000, 88000, 90000, 93000, 96000],
+    '央采商城': [48000, 50000, 52000, 51000, 51000, 53200, 55000, 56000, 58000, 59000, 61000, 62000],
+    '中航工业集采': [32000, 35000, 38000, 40000, 42000, 48600, 50000, 52000, 54000, 56000, 58000, 60000],
+    '中铁物资采购': [28000, 30000, 34000, 35000, 37000, 41400, 43000, 45000, 46000, 48000, 50000, 52000]
+  };
+
+  // 获取选中的项目
+  var checks = document.querySelectorAll('#trend-project-dropdown input[type="checkbox"]');
+  var selected = [];
+  for (var i = 1; i < checks.length; i++) {
+    if (checks[i].checked) selected.push(checks[i].value);
+  }
+  if (selected.length === 0) {
+    chart.setOption({
+      title: { text: '请至少选择一个项目', left: 'center', top: 'center', textStyle: { color: '#999', fontSize: 14 } }
+    }, true);
+    return;
+  }
+
+  var series = [];
+  var legend = [];
+  for (var i = 0; i < projectNames.length; i++) {
+    if (selected.indexOf(projectNames[i]) >= 0) {
+      legend.push(projectNames[i]);
+      series.push({
+        name: projectNames[i],
+        type: 'line',
+        data: allTrendData[projectNames[i]],
+        smooth: true,
+        lineStyle: { width: 2 },
+        symbol: 'circle',
+        symbolSize: 6,
+        itemStyle: { color: projectColors[i] }
+      });
+    }
+  }
+
+  chart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: legend, bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { fontSize: 11 } },
+    grid: { left: '3%', right: '4%', bottom: '14%', top: '5%', containLabel: true },
+    xAxis: { type: 'category', data: months, boundaryGap: false },
+    yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+    color: projectColors,
+    series: series
+  }, true);
+}
+
+// ============ 结算明细时间切换 ============
+function switchSettlementPeriod(period, btn) {
+  document.querySelectorAll('#tab-settlement .toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  var label = { week: '本周', month: '本月', quarter: '本季度', year: '本年' }[period];
+  document.getElementById('settlement-table-subtitle').textContent = '各项目' + label + '结算金额明细';
+  var multipliers = { week: 0.08, month: 0.33, quarter: 1, year: 4 };
+  var m = multipliers[period];
+  var tbody = document.getElementById('settlement-table-body');
+  var rows = tbody.querySelectorAll('tr');
+  var baseAmounts = [386500, 268300, 215800, 156200, 128600, 112400];
+  var baseCounts = [142, 98, 87, 65, 53, 48];
+  for (var i = 0; i < rows.length; i++) {
+    var cells = rows[i].querySelectorAll('td');
+    cells[2].textContent = '¥ ' + Math.round(baseAmounts[i] * m).toLocaleString();
+    cells[3].textContent = Math.round(baseCounts[i] * m);
+  }
+}
+
+// ============ 时间范围筛选 ============
+function onPeriodChange() {
+  var val = document.getElementById('filter-period').value;
+  document.getElementById('custom-date-range').style.display = val === 'custom' ? 'flex' : 'none';
+}
+
+function onCustomDateChange() {
+  // 自定义日期变更时触发数据刷新
+}
+
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', function() {
+  renderSettlement();
+  initPagination('table-settlement', 'pagination-settlement', 5);
+});
+</script>
+
+</body>
+</html>
