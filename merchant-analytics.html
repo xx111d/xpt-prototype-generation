@@ -1,0 +1,2598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商家端 - 统计分析</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>if(typeof echarts==='undefined'){document.write('<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"><\/script>');}</script>
+<style>
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --primary: 350 89% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 350 30% 96%;
+    --secondary-foreground: 350 60% 30%;
+    --muted: 350 20% 96%;
+    --muted-foreground: 350 10% 46%;
+    --accent: 350 30% 96%;
+    --accent-foreground: 350 60% 30%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 210 40% 98%;
+    --border: 350 15% 91%;
+    --input: 350 15% 91%;
+    --ring: 350 89% 60%;
+    --radius: 0.5rem;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --sidebar-width: 220px;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',-apple-system,'PingFang SC','Helvetica Neue','Microsoft YaHei',sans-serif;background:hsl(350,20%,96%);color:hsl(var(--foreground));font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+/* ===== Layout ===== */
+.layout{display:flex;min-height:100vh;}
+
+/* ===== Sidebar ===== */
+.sidebar{width:var(--sidebar-width);background:hsl(var(--background));color:hsl(var(--muted-foreground));flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid hsl(var(--border));position:fixed;top:0;left:0;bottom:0;z-index:200;box-shadow:1px 0 3px rgb(0 0 0 / 0.04);}
+.sidebar-brand{display:flex;align-items:center;gap:0.625rem;padding:1.25rem 1.25rem 1rem;border-bottom:1px solid hsl(var(--border));font-size:1rem;font-weight:700;color:hsl(var(--primary));}
+.sidebar-brand .brand-icon{width:32px;height:32px;background:hsl(var(--primary));color:#fff;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.sidebar-nav{flex:1;padding:0.75rem;display:flex;flex-direction:column;gap:0.25rem;}
+.sidebar-nav .nav-item{display:flex;align-items:center;gap:0.625rem;padding:0.625rem 0.75rem;border-radius:var(--radius);cursor:pointer;font-size:0.875rem;font-weight:500;color:hsl(var(--muted-foreground));transition:all 0.15s ease;border:none;background:transparent;width:100%;text-align:left;}
+.sidebar-nav .nav-item:hover{color:hsl(var(--foreground));background:hsl(var(--muted));}
+.sidebar-nav .nav-item.active{background:hsl(var(--primary));color:hsl(var(--primary-foreground));}
+.sidebar-nav .nav-icon{font-size:1.1rem;width:1.3rem;text-align:center;flex-shrink:0;}
+.sidebar-footer{padding:1rem;border-top:1px solid hsl(var(--border));display:flex;align-items:center;gap:0.625rem;}
+.sidebar-footer .sf-avatar{width:32px;height:32px;border-radius:50%;background:hsl(var(--primary));color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:700;}
+.sidebar-footer .sf-info{flex:1;}
+.sidebar-footer .sf-name{font-size:0.8125rem;color:hsl(var(--foreground));font-weight:500;}
+.sidebar-footer .sf-role{font-size:0.6875rem;color:hsl(var(--muted-foreground));}
+
+/* ===== Main ===== */
+.main{flex:1;margin-left:var(--sidebar-width);min-height:100vh;display:flex;flex-direction:column;}
+.header{height:56px;background:hsl(var(--background));border-bottom:1px solid hsl(var(--border));display:flex;align-items:center;padding:0 1.5rem;gap:16px;flex-shrink:0;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm);}
+.header .breadcrumb{font-size:0.875rem;color:hsl(var(--muted-foreground));}
+.header .breadcrumb span{margin:0 4px;}
+.header .breadcrumb .current{color:hsl(var(--foreground));font-weight:600;}
+.header .actions{margin-left:auto;display:flex;align-items:center;gap:16px;}
+.header .notification{position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);cursor:pointer;transition:background .15s;font-size:18px;}
+.header .notification:hover{background:hsl(var(--muted));}
+.header .notification .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:hsl(var(--primary));border-radius:50%;border:2px solid #fff;}
+.header .user-info{display:flex;align-items:center;gap:8px;}
+.header .avatar{width:34px;height:34px;border-radius:50%;background:hsl(var(--primary));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;}
+.header .user-name{font-size:13px;color:hsl(var(--foreground));font-weight:500;}
+
+/* ===== Content ===== */
+.content{flex:1;overflow-y:auto;padding:1.5rem;max-width:1400px;width:100%;margin:0 auto;}
+
+/* ===== Time Range Pills ===== */
+.toolbar{display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+.time-pills{display:inline-flex;border:1px solid hsl(var(--border));border-radius:var(--radius);overflow:hidden;}
+.time-pill{padding:0.25rem 0.75rem;border:none;border-right:1px solid hsl(var(--border));font-size:0.75rem;font-weight:500;color:hsl(var(--muted-foreground));cursor:pointer;transition:all .15s;background:hsl(var(--background));}
+.time-pill:last-child{border-right:none;}
+.time-pill:hover{background:hsl(var(--muted));}
+.time-pill.active{color:hsl(var(--primary-foreground));background:hsl(var(--primary));box-shadow:none;}
+.toolbar .date-range{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.toolbar .date-range select,
+.toolbar .date-range input{height:36px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 12px;font-size:13px;background:hsl(var(--background));color:hsl(var(--foreground));font-family:inherit;outline:none;transition:all .15s;}
+.toolbar .date-range input{width:140px;}
+.toolbar .date-range select:focus,
+.toolbar .date-range input:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.toolbar .btn-apply{height:36px;padding:0 20px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.toolbar .btn-apply:hover{opacity:0.9;}
+
+/* ===== Tab Panels ===== */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ===== KPI Cards ===== */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+.kpi-card{background:hsl(var(--card));border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow-sm);border:1px solid hsl(var(--border));transition:box-shadow .15s;position:relative;overflow:hidden;}
+.kpi-card:hover{box-shadow:var(--shadow-md);}
+.kpi-card .kpi-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.kpi-card .kpi-icon{width:44px;height:44px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.kpi-card.blue .kpi-icon{background:hsl(220,50%,96%);color:hsl(220,80%,55%);}
+.kpi-card.green .kpi-icon{background:hsl(142,50%,93%);color:hsl(142,71%,45%);}
+.kpi-card.orange .kpi-icon{background:hsl(38,92%,95%);color:hsl(38,92%,50%);}
+.kpi-card.purple .kpi-icon{background:hsl(270,50%,96%);color:hsl(270,60%,55%);}
+.kpi-card .kpi-label{font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-bottom:0.5rem;font-weight:500;}
+.kpi-card .kpi-value{font-size:1.75rem;font-weight:700;color:hsl(var(--foreground));margin-bottom:0.375rem;}
+.kpi-card .kpi-change{font-size:0.8125rem;display:flex;align-items:center;gap:0.375rem;}
+.kpi-card .kpi-change.up{color:hsl(var(--success));}
+.kpi-card .kpi-change.down{color:hsl(var(--destructive));}
+.kpi-card .kpi-change .muted{color:hsl(var(--muted-foreground));margin-left:0.25rem;}
+.kpi-card .kpi-sub{font-size:0.75rem;color:hsl(var(--muted-foreground));margin-top:0.25rem;}
+
+/* ===== Chart Cards ===== */
+.chart-card{background:hsl(var(--card));border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow-sm);border:1px solid hsl(var(--border));margin-bottom:1.5rem;transition:box-shadow .15s;display:flex;flex-direction:column;}
+.chart-card:hover{box-shadow:var(--shadow-md);}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.chart-title{font-size:0.9375rem;font-weight:600;color:hsl(var(--foreground));}
+.chart-actions{display:flex;gap:0.375rem;}
+.chart-actions .chart-btn{padding:0.375rem 0.75rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.75rem;font-weight:500;color:hsl(var(--muted-foreground));background:hsl(var(--background));cursor:pointer;font-family:inherit;transition:all .15s;}
+.chart-actions .chart-btn:hover{color:hsl(var(--primary));border-color:hsl(var(--primary));background:hsl(var(--secondary));}
+.chart-actions .chart-btn.active{color:hsl(var(--primary-foreground));background:hsl(var(--primary));border-color:hsl(var(--primary));box-shadow:none;}
+.chart-body{position:relative;min-height:300px;flex:1;}
+
+/* ===== Table ===== */
+.data-table{width:100%;border-collapse:collapse;font-size:0.875rem;}
+.data-table thead th{padding:0.75rem 1rem;text-align:left;font-size:0.8125rem;font-weight:600;color:hsl(var(--muted-foreground));background:hsl(350,20%,96%);border-bottom:1px solid hsl(var(--border));white-space:nowrap;}
+.data-table tbody td{padding:0.75rem 1rem;border-bottom:1px solid hsl(var(--border));font-size:0.8125rem;color:hsl(var(--foreground));}
+.data-table tbody tr:hover td{background:hsl(350,20%,96%);}
+.data-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+.data-table .highlight{color:hsl(var(--primary));font-weight:600;}
+
+/* ===== Tags ===== */
+.tag{display:inline-block;padding:0.125rem 0.625rem;border-radius:9999px;font-size:0.75rem;font-weight:500;}
+.tag-blue{background:hsl(220,50%,95%);color:hsl(220,80%,50%);}
+.tag-green{background:hsl(142,50%,93%);color:hsl(142,60%,35%);}
+.tag-orange{background:hsl(38,92%,95%);color:hsl(38,92%,40%);}
+.tag-red{background:hsl(0,50%,95%);color:hsl(0,70%,50%);}
+
+/* ===== Table Toolbar ===== */
+.table-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;gap:0.75rem;}
+.table-toolbar .tb-left{display:flex;align-items:center;gap:0.5rem;}
+.table-toolbar .tb-right{margin-left:auto;display:flex;align-items:center;gap:0.5rem;}
+.tb-btn{height:34px;padding:0 0.75rem;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.8125rem;font-weight:500;color:hsl(var(--foreground));background:hsl(var(--background));cursor:pointer;display:inline-flex;align-items:center;gap:0.375rem;transition:all .15s;white-space:nowrap;font-family:inherit;}
+.tb-btn:hover{background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary));}
+.tb-btn.export-btn:hover{background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary));}
+.tb-btn.active{background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary));}
+
+/* ===== Tenant Analysis Controls ===== */
+.tenant-controls{display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;}
+.rank-select{height:34px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 0.75rem;font-size:0.8125rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;cursor:pointer;transition:all .15s;min-width:120px;}
+.rank-select:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.rank-custom{display:flex;align-items:center;gap:6px;font-size:0.8125rem;color:hsl(var(--muted-foreground));}
+.rank-custom input{width:56px;height:34px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 8px;font-size:0.8125rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;text-align:center;transition:all .15s;}
+.rank-custom input:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.rank-custom .rank-sep{color:hsl(var(--muted-foreground));}
+.tenant-search-wrap{position:relative;width:220px;}
+.tenant-search-wrap input{width:100%;height:34px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 12px 0 34px;font-size:0.8125rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;transition:all .15s;}
+.tenant-search-wrap input:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.tenant-search-wrap input::placeholder{color:hsl(var(--muted-foreground));}
+.tenant-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:hsl(var(--muted-foreground));font-size:13px;pointer-events:none;}
+.tenant-summary{font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-left:auto;white-space:nowrap;}
+.tenant-summary strong{color:hsl(var(--primary));font-weight:600;}
+
+/* ===== Searchable Select ===== */
+.search-select{position:relative;display:inline-block;width:150px;}
+.search-select .ss-input{width:100%;height:34px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 28px 0 10px;font-size:0.8125rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;cursor:pointer;transition:all .15s;}
+.search-select .ss-input:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);cursor:text;}
+.search-select .ss-input::placeholder{color:hsl(var(--muted-foreground));}
+.search-select .ss-input:disabled{opacity:.45;cursor:not-allowed;background:hsl(var(--muted));}
+.search-select .ss-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:hsl(var(--muted-foreground));font-size:11px;pointer-events:none;transition:transform .2s;}
+.search-select.open .ss-arrow{transform:translateY(-50%) rotate(180deg);}
+.search-select .ss-menu{position:absolute;top:calc(100% + 4px);left:0;width:100%;max-height:220px;overflow-y:auto;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--shadow-md);z-index:100;display:none;padding:0.375rem 0;}
+.search-select.open .ss-menu{display:block;}
+.ss-option{padding:7px 12px;font-size:0.8125rem;color:hsl(var(--foreground));cursor:pointer;transition:background .1s;}
+.ss-option:hover{background:hsl(var(--secondary));color:hsl(var(--primary));}
+.ss-option.selected{color:hsl(var(--primary));font-weight:600;background:hsl(var(--secondary));}
+.ss-option.hidden{display:none;}
+.ss-empty{padding:16px;text-align:center;font-size:0.75rem;color:hsl(var(--muted-foreground));}
+.ss-divider{height:1px;background:hsl(var(--border));margin:4px 0;}
+.search-select .ss-clear{position:absolute;right:22px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:hsl(var(--border));color:hsl(var(--muted-foreground));font-size:10px;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;transition:all .15s;}
+.search-select .ss-clear:hover{background:hsl(var(--secondary));color:hsl(var(--primary));}
+.search-select.has-value .ss-clear{display:flex;}
+.search-select .ss-menu::-webkit-scrollbar{width:4px;}
+.search-select .ss-menu::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
+
+/* ===== Pagination ===== */
+.table-pagination{display:flex;align-items:center;justify-content:space-between;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid hsl(var(--border));flex-wrap:wrap;gap:0.5rem;font-size:0.8125rem;color:hsl(var(--muted-foreground));}
+.pg-controls{display:flex;align-items:center;gap:0.25rem;}
+.pg-btn{min-width:2rem;height:2rem;padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.8125rem;background:hsl(var(--background));color:hsl(var(--foreground));transition:all .15s;font-weight:500;}
+.pg-btn:hover:not(.disabled){background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary));}
+.pg-btn.active{background:hsl(var(--primary));color:hsl(var(--primary-foreground));border-color:hsl(var(--primary));font-weight:600;box-shadow:none;}
+.pg-btn.disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;}
+
+/* ===== Project Multi-Select ===== */
+.project-select{position:relative;display:inline-block;width:260px;}
+.project-select .ps-trigger{width:100%;height:34px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 30px 0 10px;font-size:0.8125rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.project-select .ps-trigger:hover{border-color:hsl(var(--ring));}
+.project-select.open .ps-trigger{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.project-select .ps-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:hsl(var(--muted-foreground));font-size:11px;pointer-events:none;transition:transform .2s;}
+.project-select.open .ps-arrow{transform:translateY(-50%) rotate(180deg);}
+.project-select .ps-menu{position:absolute;top:calc(100% + 4px);left:0;width:100%;max-height:260px;overflow-y:auto;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--shadow-md);z-index:100;display:none;padding:0.375rem 0;}
+.project-select.open .ps-menu{display:block;}
+.ps-search-wrap{padding:6px 8px;border-bottom:1px solid hsl(var(--border));}
+.ps-search-wrap input{width:100%;height:30px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 8px;font-size:0.75rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;transition:all .15s;}
+.ps-search-wrap input:focus{border-color:hsl(var(--ring));}
+.ps-search-wrap input::placeholder{color:hsl(var(--muted-foreground));}
+.ps-option{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:0.8125rem;color:hsl(var(--foreground));cursor:pointer;transition:background .1s;user-select:none;}
+.ps-option:hover{background:hsl(var(--secondary));}
+.ps-option.hidden{display:none;}
+.ps-check{width:16px;height:16px;border:1.5px solid hsl(var(--border));border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:transparent;transition:all .15s;}
+.ps-option.checked .ps-check{background:hsl(var(--primary));border-color:hsl(var(--primary));color:#fff;}
+.ps-option.checked{color:hsl(var(--primary));font-weight:500;}
+.ps-count{font-size:0.75rem;color:hsl(var(--primary));font-weight:600;flex-shrink:0;}
+.project-select .ps-menu::-webkit-scrollbar{width:4px;}
+.project-select .ps-menu::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
+
+/* ===== Recovery Trend Time Controls ===== */
+.recovery-controls{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;}
+.time-dim-btns{display:inline-flex;border:1px solid hsl(var(--border));border-radius:var(--radius);overflow:hidden;}
+.td-btn{padding:0.25rem 0.75rem;font-size:0.75rem;font-weight:500;color:hsl(var(--muted-foreground));background:hsl(var(--background));cursor:pointer;transition:all .15s;border:none;border-right:1px solid hsl(var(--border));user-select:none;}
+.td-btn:last-child{border-right:none;}
+.td-btn:hover{background:hsl(var(--muted));}
+.td-btn.active{color:hsl(var(--primary-foreground));background:hsl(var(--primary));}
+.time-range{display:flex;align-items:center;gap:6px;}
+.tr-btn{height:28px;padding:0 12px;border:1px solid hsl(var(--border));border-radius:var(--radius);font-size:0.75rem;font-weight:500;color:hsl(var(--muted-foreground));background:hsl(var(--background));cursor:pointer;transition:all .15s;font-family:inherit;}
+.tr-btn:hover{border-color:hsl(var(--primary));color:hsl(var(--primary));}
+.tr-btn.active{border-color:hsl(var(--primary));color:hsl(var(--primary));background:hsl(var(--secondary));}
+.tr-custom{display:flex;align-items:center;gap:4px;font-size:0.75rem;color:hsl(var(--muted-foreground));}
+.tr-custom input{width:52px;height:28px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 6px;font-size:0.75rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;text-align:center;transition:all .15s;}
+.tr-custom input:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.tr-select{height:28px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 8px;font-size:0.75rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;cursor:pointer;transition:all .15s;}
+.tr-select:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.tr-date-range{display:flex;align-items:center;gap:6px;}
+.tr-date{height:28px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 8px;font-size:0.75rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;cursor:pointer;transition:all .15s;}
+.tr-date:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+
+/* ===== Turnover Rules Controls ===== */
+.turnover-rules{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 1.25rem 0.75rem;border-bottom:1px solid hsl(var(--border));}
+.turnover-rules .tr-label{font-size:0.75rem;color:hsl(var(--muted-foreground));font-weight:500;white-space:nowrap;}
+.turnover-rules .tr-summary{font-size:0.75rem;color:hsl(var(--foreground));display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+.turnover-rules .tr-summary .tr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:1px;}
+.turnover-rules .tr-dot.green{background:hsl(var(--success));}
+.turnover-rules .tr-dot.blue{background:hsl(220,80%,55%);}
+.turnover-rules .tr-dot.amber{background:hsl(38,92%,50%);}
+.turnover-rules .tr-dot.red{background:hsl(var(--destructive));}
+.turnover-rules .tr-btn-edit{height:26px;padding:0 12px;border:1px solid hsl(var(--border));border-radius:var(--radius);background:hsl(var(--background));color:hsl(var(--primary));font-size:0.75rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.turnover-rules .tr-btn-edit:hover{border-color:hsl(var(--primary));background:hsl(var(--secondary));}
+
+/* ===== Modal Overlay ===== */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-card{background:hsl(var(--background));border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,0.15);width:420px;max-width:90vw;overflow:hidden;animation:modalSlideIn 0.2s ease;}
+@keyframes modalSlideIn{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid hsl(var(--border));}
+.modal-title{font-size:1rem;font-weight:700;color:hsl(var(--foreground));}
+.modal-close{width:28px;height:28px;border:none;border-radius:var(--radius);background:transparent;color:hsl(var(--muted-foreground));font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-close:hover{background:hsl(var(--muted));color:hsl(var(--foreground));}
+.modal-body{padding:1.25rem 1.5rem;}
+.modal-desc{font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-bottom:1rem;line-height:1.5;}
+.modal-rule-row{display:flex;align-items:center;gap:8px;margin-bottom:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius);background:hsl(var(--muted));}
+.modal-rule-row:last-child{margin-bottom:0;}
+.modal-rule-row .tr-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.modal-rule-row .tr-dot.green{background:hsl(var(--success));}
+.modal-rule-row .tr-dot.blue{background:hsl(220,80%,55%);}
+.modal-rule-row .tr-dot.amber{background:hsl(38,92%,50%);}
+.modal-rule-row .tr-dot.red{background:hsl(var(--destructive));}
+.modal-rule-label{font-size:0.875rem;font-weight:600;color:hsl(var(--foreground));min-width:72px;}
+.modal-rule-op{font-size:0.875rem;color:hsl(var(--muted-foreground));font-weight:500;}
+.modal-rule-row input[type=number]{width:72px;height:32px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 8px;font-size:0.875rem;color:hsl(var(--foreground));text-align:center;font-family:inherit;outline:none;transition:border-color .15s;background:hsl(var(--background));}
+.modal-rule-row input[type=number]:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.modal-rule-unit{font-size:0.8125rem;color:hsl(var(--muted-foreground));}
+.modal-rule-val{font-size:0.8125rem;color:hsl(var(--muted-foreground));font-style:italic;}
+.modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:0.5rem;padding:1rem 1.5rem;border-top:1px solid hsl(var(--border));}
+.modal-btn-reset{height:34px;padding:0 1rem;border:1px solid hsl(var(--border));border-radius:var(--radius);background:hsl(var(--background));color:hsl(var(--muted-foreground));font-size:0.8125rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.modal-btn-reset:hover{border-color:hsl(var(--destructive));color:hsl(var(--destructive));}
+.modal-btn-cancel{height:34px;padding:0 1rem;border:1px solid hsl(var(--border));border-radius:var(--radius);background:hsl(var(--background));color:hsl(var(--muted-foreground));font-size:0.8125rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.modal-btn-cancel:hover{background:hsl(var(--muted));}
+.modal-btn-apply{height:34px;padding:0 1.5rem;border:none;border-radius:var(--radius);background:hsl(var(--primary));color:hsl(var(--primary-foreground));font-size:0.8125rem;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;}
+.modal-btn-apply:hover{opacity:0.9;}
+
+/* ===== Price Analysis Panel ===== */
+.price-panel{background:hsl(var(--card));border-radius:var(--radius);border:1px solid hsl(var(--border));margin-bottom:1.5rem;overflow:visible;display:flex;flex-direction:column;box-shadow:var(--shadow-sm);}
+.price-panel .pp-header{padding:1.25rem 1.25rem 0;display:flex;align-items:center;justify-content:space-between;}
+.price-panel .pp-title{font-size:0.9375rem;font-weight:600;color:hsl(var(--foreground));}
+.price-panel .pp-count{font-size:0.75rem;color:hsl(var(--muted-foreground));white-space:nowrap;}
+.price-panel .pp-count strong{color:hsl(var(--primary));font-weight:700;}
+.price-panel .pp-toolbar{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem 1rem;border-bottom:1px solid hsl(var(--border));position:relative;flex-wrap:wrap;}
+.price-panel .pp-toolbar .search-select{width:160px;flex-shrink:0;}
+.price-panel .pp-toolbar .pp-search-wrap{position:relative;flex:1;min-width:180px;}
+.pp-search{position:relative;}
+.pp-search input{width:100%;height:36px;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:0 12px 0 36px;font-size:0.8125rem;color:hsl(var(--foreground));background:hsl(var(--background));font-family:inherit;outline:none;transition:all .15s;}
+.pp-search input:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 2px hsla(350,89%,60%,0.15);}
+.pp-search input::placeholder{color:hsl(var(--muted-foreground));}
+.pp-search .pp-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:hsl(var(--muted-foreground));font-size:14px;pointer-events:none;}
+.pp-chart-area{padding:0 1.25rem;flex:1;display:flex;flex-direction:column;min-height:280px;}
+.pp-chart-area .chart-body{min-height:260px;}
+.pp-dropdown{position:absolute;top:calc(100% + 4px);left:0;width:420px;max-height:280px;overflow-y:auto;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--shadow-md);z-index:100;display:none;}
+.pp-dropdown.show{display:block;}
+.pp-dropdown::-webkit-scrollbar{width:4px;}
+.pp-dropdown::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
+.pp-item{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:0.8125rem;color:hsl(var(--foreground));cursor:pointer;transition:background .1s;border-bottom:1px solid hsl(var(--muted));}
+.pp-item:last-child{border-bottom:none;}
+.pp-item:hover{background:hsl(var(--secondary));}
+.pp-item.checked{background:hsl(var(--secondary));}
+.pp-item.disabled{opacity:.45;cursor:not-allowed;}
+.pp-item.disabled:hover{background:transparent;}
+.pp-item input[type=checkbox]{accent-color:hsl(var(--primary));width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+.pp-item.disabled input{cursor:not-allowed;}
+.pp-item .pp-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pp-item .pp-prices{display:flex;gap:12px;font-size:0.6875rem;color:hsl(var(--muted-foreground));flex-shrink:0;}
+.pp-item .pp-prices span{white-space:nowrap;}
+.pp-empty{padding:32px;text-align:center;font-size:0.8125rem;color:hsl(var(--muted-foreground));}
+.pp-legend{display:flex;gap:24px;justify-content:center;padding:0 1.25rem 1rem;font-size:0.75rem;color:hsl(var(--muted-foreground));}
+
+/* ===== Grid layouts ===== */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:1rem;}
+
+/* ===== Progress bar ===== */
+.progress-bar{height:8px;background:hsl(var(--muted));border-radius:9999px;overflow:hidden;margin-top:8px;}
+.progress-bar .fill{height:100%;border-radius:9999px;transition:width .5s;}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#9ca3af;}
+
+/* ===== Responsive ===== */
+@media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr);}.grid-2,.grid-2-1{grid-template-columns:1fr;}}
+@media(max-width:768px){
+  :root{--sidebar-width:0px;}
+  .sidebar{display:none;}
+  .main{margin-left:0;}
+  .kpi-row{grid-template-columns:1fr;}
+  .content{padding:1rem;}
+}
+
+@media(min-width:769px){.mobile-nav{display:none;}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">&#9776;</div>
+      商家端
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="switchTab(0)">
+        <span class="nav-icon">&#128202;</span>
+        经营概览
+      </button>
+    <button class="nav-item" onclick="switchTab(1)">
+      <span class="nav-icon">&#128176;</span>
+      商品分析
+    </button>
+    <button class="nav-item" onclick="switchTab(2)">
+      <span class="nav-icon">&#128230;</span>
+      订单分析
+    </button>
+    <button class="nav-item" onclick="switchTab(3)">
+      <span class="nav-icon">&#128230;</span>
+      结算分析
+    </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sf-avatar">华</div>
+      <div class="sf-info">
+        <div class="sf-name">华为官方旗舰店</div>
+        <div class="sf-role">商家管理员</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="header">
+      <div class="breadcrumb">工作台<span>/</span>数据分析<span>/</span><span class="current">统计分析</span></div>
+      <div class="actions">
+        <div class="notification">🔔<span class="dot"></span></div>
+        <div class="user-info">
+          <div class="avatar">华</div>
+          <span class="user-name">华为官方旗舰店</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Toolbar: Time Pills + Custom Date Range -->
+      <div class="toolbar">
+        <div class="time-pills">
+          <div class="time-pill" data-range="week" onclick="selectPill(this)">近七天</div>
+          <div class="time-pill" data-range="month" onclick="selectPill(this)">本月</div>
+          <div class="time-pill active" data-range="quarter" onclick="selectPill(this)">本季度</div>
+          <div class="time-pill" data-range="custom" onclick="selectPill(this)">自定义</div>
+        </div>
+        <div class="date-range" id="customDateWrap" style="display:none;">
+          <input type="date" id="dateStart" value="2026-01-01">
+          <span style="color:#9ca3af">~</span>
+          <input type="date" id="dateEnd" value="2026-06-30">
+          <button class="btn-apply" onclick="refresh()">查 询</button>
+        </div>
+      </div>
+
+      <!-- ===== Tab 1: 经营概况 ===== -->
+      <div class="tab-panel active" id="tab-0">
+        <!-- KPI Cards -->
+        <div class="kpi-row">
+          <div class="kpi-card blue">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">总销售量</div>
+                <div class="kpi-value" id="kv-sales">12,846</div>
+                <div class="kpi-change up" id="kc-sales">↑ 18.5%<span class="muted">较上月</span></div>
+              </div>
+              <div class="kpi-icon">📦</div>
+            </div>
+            <div class="kpi-sub" id="ks-sales">日均 428 件</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">总订单量</div>
+                <div class="kpi-value" id="kv-orders">3,264</div>
+                <div class="kpi-change up" id="kc-orders">↑ 12.3%<span class="muted">较上月</span></div>
+              </div>
+              <div class="kpi-icon">🛒</div>
+            </div>
+            <div class="kpi-sub" id="ks-orders">客单价 ¥3,210</div>
+          </div>
+          <div class="kpi-card orange">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">履约率</div>
+                <div class="kpi-value" id="kv-fulfill">96.8%</div>
+                <div class="kpi-change down" id="kc-fulfill">↓ 0.5%<span class="muted">较上月</span></div>
+              </div>
+              <div class="kpi-icon">✅</div>
+            </div>
+            <div class="kpi-sub">目标值 ≥ 95%</div>
+          </div>
+          <div class="kpi-card purple">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">结算率</div>
+                <div class="kpi-value" id="kv-settle">89.4%</div>
+                <div class="kpi-change up" id="kc-settle">↑ 3.2%<span class="muted">较上月</span></div>
+              </div>
+              <div class="kpi-icon">💳</div>
+            </div>
+            <div class="kpi-sub" id="ks-settle">未结算 ¥128,500</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Sales Trend -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">销售趋势</div>
+              <div class="chart-actions">
+                <div class="chart-btn active">销售量</div>
+                <div class="chart-btn">订单量</div>
+              </div>
+            </div>
+            <div class="chart-body" id="chartSalesTrend" style="height:300px;"></div>
+          </div>
+
+          <!-- Project Analysis -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">项目分析</div>
+              <div class="chart-actions">
+                <div class="chart-btn active" onclick="switchProjectPie('sales',this)">项目销量</div>
+                <div class="chart-btn" onclick="switchProjectPie('profit',this)">利润占比</div>
+              </div>
+            </div>
+            <div class="chart-body" id="chartProjectAnalysis" style="height:300px;"></div>
+          </div>
+        </div>
+
+        <!-- Tenant Analysis -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">租户分析</div>
+          </div>
+          <div class="tenant-controls">
+            <select class="rank-select" id="rankSelect" onchange="changeRankRange()">
+              <option value="5">前 5 名</option>
+              <option value="10" selected>前 10 名</option>
+              <option value="15">前 15 名</option>
+              <option value="20">前 20 名</option>
+              <option value="custom">自定义范围</option>
+            </select>
+            <div class="rank-custom" id="rankCustom" style="display:none;">
+              <span>第</span>
+              <input type="number" id="rankFrom" value="1" min="1" onchange="renderTenantTable()">
+              <span class="rank-sep">~</span>
+              <input type="number" id="rankTo" value="10" min="1" onchange="renderTenantTable()">
+              <span>名</span>
+            </div>
+            <div class="tenant-search-wrap">
+              <span class="tenant-search-icon">🔍</span>
+              <input type="text" id="tenantSearchInput" placeholder="搜索租户名称..." oninput="renderTenantTable()">
+            </div>
+            <span class="tenant-summary" id="tenantSummary"></span>
+          </div>
+          <div class="table-toolbar">
+            <div class="tb-left">
+              <button class="tb-btn" onclick="toggleSort('tenantTable')" id="tenantTable-sort-btn">⇅ 倒序</button>
+            </div>
+            <div class="tb-right">
+              <button class="tb-btn export-btn" onclick="exportTable('tenantTable','租户分析')">↓ 导出 Excel</button>
+            </div>
+          </div>
+          <table class="data-table" id="tenantTable">
+            <thead>
+              <tr>
+                <th style="width:48px">#</th>
+                <th>租户名称</th>
+                <th style="text-align:right" data-type="num">拿货量（件）</th>
+                <th style="text-align:right" data-type="num">拿货金额</th>
+                <th style="text-align:right" data-type="num">回款金额</th>
+                <th data-type="num">回款率</th>
+                <th style="text-align:right" data-type="num">订单量</th>
+                <th>回款率进度</th>
+              </tr>
+            </thead>
+            <tbody id="tenantTableBody"></tbody>
+          </table>
+          <div class="table-pagination" id="tenantTable-pag"></div>
+        </div>
+      </div>
+
+      <!-- ===== Tab 2: 商品分析 ===== -->
+      <div class="tab-panel" id="tab-1">
+        <div class="kpi-row">
+          <div class="kpi-card blue">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">在售商品数</div>
+                <div class="kpi-value" id="kv-products">368</div>
+              </div>
+              <div class="kpi-icon">📋</div>
+            </div>
+            <div class="kpi-sub" id="ks-products">较上月 +12</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">整体动销率</div>
+                <div class="kpi-value" id="kpiTurnoverRate">78.5%</div>
+                <div class="kpi-change up" id="kpiTurnoverChange">↑ 2.1%</div>
+              </div>
+              <div class="kpi-icon">📈</div>
+            </div>
+          </div>
+          <div class="kpi-card orange">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">滞销商品数</div>
+                <div class="kpi-value" id="kpiSlowCount">79</div>
+                <div class="kpi-change down" id="kpiSlowChange">↑ 8<span class="muted">需关注</span></div>
+              </div>
+              <div class="kpi-icon">⚠️</div>
+            </div>
+          </div>
+          <div class="kpi-card purple">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">平均利润率</div>
+                <div class="kpi-value" id="kv-profit">18.6%</div>
+                <div class="kpi-change up" id="kc-profit">↑ 1.2%</div>
+              </div>
+              <div class="kpi-icon">💎</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Sales Ranking -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">商品销量排行</div>
+            <div class="chart-actions" id="productViewBtns">
+              <div class="chart-btn active" onclick="switchProductView('order',this)">按项目单</div>
+              <div class="chart-btn" onclick="switchProductView('project',this)">按项目</div>
+            </div>
+          </div>
+          <div class="table-toolbar">
+            <div class="tb-left">
+              <button class="tb-btn" onclick="toggleSort('productTable')" id="productTable-sort-btn">⇅ 倒序</button>
+            </div>
+            <div class="tb-right" id="productToolbarRight">
+              <div class="search-select" id="projectSelect" style="display:none;">
+                <input class="ss-input" placeholder="选择项目" onfocus="openSSMenu('projectSelect')" oninput="filterSSOptions('projectSelect')" onblur="closeSSMenuDelayed('projectSelect')">
+                <span class="ss-clear" onclick="clearSSValue('projectSelect',event)">✕</span>
+                <span class="ss-arrow">▾</span>
+                <div class="ss-menu"></div>
+              </div>
+              <div class="search-select" id="platformSelect" style="display:none;">
+                <input class="ss-input" placeholder="选择平台" disabled onfocus="openSSMenu('platformSelect')" oninput="filterSSOptions('platformSelect')" onblur="closeSSMenuDelayed('platformSelect')">
+                <span class="ss-clear" onclick="clearSSValue('platformSelect',event)">✕</span>
+                <span class="ss-arrow">▾</span>
+                <div class="ss-menu"></div>
+              </div>
+              <button class="tb-btn export-btn" onclick="exportTable('productTable','商品销量排行')">↓ 导出 Excel</button>
+            </div>
+          </div>
+          <table class="data-table" id="productTable">
+            <thead id="productTableHead"></thead>
+            <tbody id="productTableBody"></tbody>
+          </table>
+          <div class="table-pagination" id="productTable-pag"></div>
+        </div>
+
+        <!-- Turnover + Price Analysis Row (4:6) -->
+        <div style="display:grid;grid-template-columns:4fr 6fr;gap:24px;align-items:stretch;margin-bottom:0;">
+          <div class="chart-card" style="margin-bottom:0;">
+            <div class="chart-header">
+              <div class="chart-title">动销率分析</div>
+            </div>
+            <div class="turnover-rules" id="turnoverRules">
+              <span class="tr-label">规则设置：</span>
+              <span class="tr-summary" id="turnoverRuleSummary">
+                <span class="tr-dot green"></span>畅销 ≥500 &nbsp;
+                <span class="tr-dot blue"></span>正常 ≥150 &nbsp;
+                <span class="tr-dot amber"></span>预警 ≥50 &nbsp;
+                <span class="tr-dot red"></span>滞销 &lt;50
+              </span>
+              <button class="tr-btn-edit" onclick="openTurnoverModal()">设置规则</button>
+            </div>
+            <div class="chart-body" id="chartTurnover" style="height:280px;flex:1;"></div>
+          </div>
+
+          <div class="price-panel" id="pricePanel" style="margin-bottom:0;">
+            <div class="pp-header">
+              <div class="pp-title">价格分析</div>
+              <span class="pp-count" id="ppCountLabel">已选 <strong>0</strong> 个商品</span>
+            </div>
+            <div class="pp-toolbar">
+              <div class="search-select" id="ppProjectSelect">
+                <input class="ss-input" placeholder="选择项目" onfocus="openSSMenu('ppProjectSelect')" oninput="filterSSOptions('ppProjectSelect')" onblur="closeSSMenuDelayed('ppProjectSelect')">
+                <span class="ss-clear" onclick="clearPPProject(event)">✕</span>
+                <span class="ss-arrow">▾</span>
+                <div class="ss-menu"></div>
+              </div>
+              <div class="search-select" id="ppPlatformSelect">
+                <input class="ss-input" placeholder="请先选择项目" disabled onfocus="openSSMenu('ppPlatformSelect')" oninput="filterSSOptions('ppPlatformSelect')" onblur="closeSSMenuDelayed('ppPlatformSelect')">
+                <span class="ss-clear" onclick="clearPPPlatform(event)">✕</span>
+                <span class="ss-arrow">▾</span>
+                <div class="ss-menu"></div>
+              </div>
+              <div class="pp-search-wrap">
+                <div class="pp-search">
+                  <span class="pp-search-icon">🔍</span>
+                  <input type="text" id="ppSearchInput" placeholder="请先选择项目和平台" disabled onfocus="onPriceSearchFocus()" oninput="filterPriceProducts()" onblur="onPriceSearchBlur()">
+                </div>
+                <div class="pp-dropdown" id="ppDropdown"></div>
+              </div>
+            </div>
+            <div class="pp-chart-area">
+              <div class="chart-body" id="chartPriceAnalysis" style="flex:1;"></div>
+            </div>
+            <div class="pp-legend">
+              <span><span style="display:inline-block;width:16px;height:3px;background:#3b82f6;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>供货价</span>
+              <span><span style="display:inline-block;width:16px;height:3px;background:#f97316;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>提报价</span>
+              <span><span style="display:inline-block;width:12px;height:12px;background:rgba(34,197,94,.15);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>利润差(正)</span>
+              <span><span style="display:inline-block;width:12px;height:12px;background:rgba(239,68,68,.15);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>利润差(负)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tab 3: 订单分析 ===== -->
+      <div class="tab-panel" id="tab-2">
+        <div class="kpi-row">
+          <div class="kpi-card blue">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">总订单量</div>
+                <div class="kpi-value" id="kv-t2orders">3,264</div>
+                <div class="kpi-change up" id="kc-t2orders">↑ 12.3%</div>
+              </div>
+              <div class="kpi-icon">📋</div>
+            </div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">项目单订单</div>
+                <div class="kpi-value" id="kv-t2proj">1,892</div>
+              </div>
+              <div class="kpi-icon">🏢</div>
+            </div>
+            <div class="kpi-sub" id="ks-t2proj">占比 58.0%</div>
+          </div>
+          <div class="kpi-card orange">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">自然单订单</div>
+                <div class="kpi-value" id="kv-t2nat">1,372</div>
+              </div>
+              <div class="kpi-icon">👤</div>
+            </div>
+            <div class="kpi-sub" id="ks-t2nat">占比 42.0%</div>
+          </div>
+          <div class="kpi-card purple">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">平均订单金额</div>
+                <div class="kpi-value" id="kv-t2avg">¥3,210</div>
+                <div class="kpi-change up" id="kc-t2avg">↑ ¥180</div>
+              </div>
+              <div class="kpi-icon">💰</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Project Statistics -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">项目统计</div>
+            </div>
+            <div style="padding:0 24px 12px;">
+              <div class="project-select" id="projectOrderSelect">
+                <div class="ps-trigger" onclick="toggleProjectSelect()">
+                  <span id="psLabel">默认 5 个项目</span>
+                </div>
+                <span class="ps-arrow">▾</span>
+                <div class="ps-menu" id="psMenu">
+                  <div class="ps-search-wrap">
+                    <input type="text" placeholder="搜索项目..." oninput="filterProjectOptions(this.value)" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+                  </div>
+                  <div id="psOptions"></div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-body" id="chartOrderProject" style="height:260px;"></div>
+          </div>
+
+          <!-- Order Distribution -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">订单分布</div>
+              <div style="font-size:12px;color:#9ca3af;">统计维度：自然单 / 项目单</div>
+            </div>
+            <div class="chart-body" id="chartOrderType" style="height:300px;"></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">订单明细（最近30天）</div>
+            <div class="chart-actions">
+              <div class="chart-btn" onclick="refresh()">刷新</div>
+            </div>
+          </div>
+          <div class="table-toolbar">
+            <div class="tb-left">
+              <button class="tb-btn" onclick="toggleSort('orderTable')" id="orderTable-sort-btn">⇅ 倒序</button>
+            </div>
+            <div class="tb-right">
+              <button class="tb-btn export-btn" onclick="exportTable('orderTable','订单明细')">↓ 导出 Excel</button>
+            </div>
+          </div>
+          <table class="data-table" id="orderTable">
+            <thead>
+              <tr>
+                <th>订单编号</th>
+                <th>租户名称</th>
+                <th>订单类型</th>
+                <th>关联项目</th>
+                <th style="text-align:right" data-type="num">订单金额</th>
+                <th>状态</th>
+                <th data-type="date">下单时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="highlight">DD20260624150826</span></td><td>星辰数码科技</td><td><span class="tag tag-blue">项目单</span></td><td>政企集采项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥8,299</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-24 15:08</td></tr>
+              <tr><td><span class="highlight">DD20260624143055</span></td><td>星辰数码科技</td><td><span class="tag tag-blue">项目单</span></td><td>政企集采项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥6,499</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-24 14:30</td></tr>
+              <tr><td><span class="highlight">DD20260624120010</span></td><td>明远教育集团</td><td><span class="tag tag-green">自然单</span></td><td>教育采购专项</td><td style="text-align:right;color:#1f2937;font-weight:600">¥356</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-24 12:00</td></tr>
+              <tr><td><span class="highlight">DD20260623182200</span></td><td>锦绣服饰贸易</td><td><span class="tag tag-blue">项目单</span></td><td>企业团购项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥596</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-23 18:22</td></tr>
+              <tr><td><span class="highlight">DD20260623160530</span></td><td>星辰数码科技</td><td><span class="tag tag-blue">项目单</span></td><td>政企集采项目</td><td style="text-align:right;color:#1f2937;font-weight:600">¥9,499</td><td><span class="tag tag-orange">待支付</span></td><td>2026-06-23 16:05</td></tr>
+              <tr><td><span class="highlight">DD20260623141000</span></td><td>明远教育集团</td><td><span class="tag tag-green">自然单</span></td><td>教育采购专项</td><td style="text-align:right;color:#1f2937;font-weight:600">¥468</td><td><span class="tag tag-green">已完成</span></td><td>2026-06-23 14:10</td></tr>
+            </tbody>
+          </table>
+          <div class="table-pagination" id="orderTable-pag"></div>
+        </div>
+      </div>
+
+      <!-- ===== Tab 4: 结算分析 ===== -->
+      <div class="tab-panel" id="tab-3">
+        <div class="kpi-row">
+          <div class="kpi-card blue">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">应收金额</div>
+                <div class="kpi-value" id="kv-t3recv">¥1,280,000</div>
+              </div>
+              <div class="kpi-icon">📄</div>
+            </div>
+            <div class="kpi-sub" id="ks-t3recv">本月</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">回款金额</div>
+                <div class="kpi-value" id="kv-t3paid">¥1,144,320</div>
+                <div class="kpi-change up" id="kc-t3paid">↑ 8.5%</div>
+              </div>
+              <div class="kpi-icon">💵</div>
+            </div>
+          </div>
+          <div class="kpi-card orange">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">资金回款率</div>
+                <div class="kpi-value" id="kv-t3rate">89.4%</div>
+                <div class="kpi-change up" id="kc-t3rate">↑ 3.2%<span class="muted">较上月</span></div>
+              </div>
+              <div class="kpi-icon">📊</div>
+            </div>
+            <div class="progress-bar"><div class="fill" id="kpb-t3rate" style="width:89.4%;background:linear-gradient(90deg,#f97316,#fb923c)"></div></div>
+          </div>
+          <div class="kpi-card purple">
+            <div class="kpi-top">
+              <div>
+                <div class="kpi-label">未回款金额</div>
+                <div class="kpi-value" id="kv-t3unpaid" style="color:#ef4444">¥135,680</div>
+                <div class="kpi-change down" id="kc-t3unpaid">涉及 3 个租户</div>
+              </div>
+              <div class="kpi-icon">🚨</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recovery Rate Trend (moved above tables) -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">回款率趋势</div>
+            <div class="recovery-controls">
+              <div class="time-dim-btns">
+                <div class="td-btn active" onclick="switchTimeDim('day',this)">按日</div>
+                <div class="td-btn" onclick="switchTimeDim('month',this)">按月</div>
+                <div class="td-btn" onclick="switchTimeDim('year',this)">按年</div>
+              </div>
+              <div class="time-range" id="timeRangeDay">
+                <select class="tr-select" id="dayPresetSelect" onchange="onDaySelectChange(this.value)">
+                  <option value="7" selected>近七天</option>
+                  <option value="14">近十四天</option>
+                  <option value="30">近三十天</option>
+                  <option value="custom">自定义时间</option>
+                </select>
+                <div class="tr-date-range" id="customDateRange" style="display:none;">
+                  <input type="date" class="tr-date" id="dayStartDate" value="2026-07-01" onchange="onCustomDateChange()">
+                  <span style="color:#9ca3af;font-size:12px;">至</span>
+                  <input type="date" class="tr-date" id="dayEndDate" value="2026-07-15" onchange="onCustomDateChange()">
+                </div>
+              </div>
+              <div class="time-range" id="timeRangeMonth" style="display:none;">
+                <select class="tr-select" id="monthYearSelect" onchange="updateMonthChart()">
+                  <option value="2026" selected>2026年</option>
+                  <option value="2025">2025年</option>
+                  <option value="2024">2024年</option>
+                </select>
+              </div>
+              <div class="time-range" id="timeRangeYear" style="display:none;">
+                <select class="tr-select" id="yearRangeSelect" onchange="updateYearChart()">
+                  <option value="5" selected>近5年</option>
+                  <option value="3">近3年</option>
+                  <option value="10">近10年</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="chart-body" id="chartRecoveryTrend" style="height:280px;"></div>
+        </div>
+
+        <!-- Settlement Summary (by Tenant) -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">结算明细汇总</div>
+          </div>
+          <div class="table-toolbar">
+            <div class="tb-left">
+              <button class="tb-btn" onclick="toggleSort('settleTable')" id="settleTable-sort-btn">⇅ 倒序</button>
+              <div class="tenant-search-wrap">
+                <input type="text" id="settleSearchInput" placeholder="搜索租户名称..." oninput="filterSettleTable()">
+              </div>
+            </div>
+            <div class="tb-right">
+              <button class="tb-btn export-btn" onclick="exportTable('settleTable','结算明细汇总')">↓ 导出 Excel</button>
+            </div>
+          </div>
+          <table class="data-table" id="settleTable">
+            <thead>
+              <tr><th>租户名称</th><th style="text-align:right" data-type="num">应收金额</th><th style="text-align:right" data-type="num">回款金额</th><th data-type="num">回款率</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>星辰数码科技</td><td style="text-align:right">¥480,000</td><td style="text-align:right;color:#22c55e">¥446,400</td><td><span class="tag tag-green">93.0%</span></td></tr>
+              <tr><td>明远教育集团</td><td style="text-align:right">¥320,000</td><td style="text-align:right;color:#22c55e">¥288,000</td><td><span class="tag tag-green">90.0%</span></td></tr>
+              <tr><td>锦绣服饰贸易</td><td style="text-align:right">¥256,000</td><td style="text-align:right;color:#22c55e">¥217,600</td><td><span class="tag tag-blue">85.0%</span></td></tr>
+              <tr><td>优学科技</td><td style="text-align:right">¥120,000</td><td style="text-align:right;color:#22c55e">¥102,000</td><td><span class="tag tag-blue">85.0%</span></td></tr>
+              <tr><td>万家生活超市</td><td style="text-align:right">¥64,000</td><td style="text-align:right;color:#f97316">¥54,400</td><td><span class="tag tag-orange">85.0%</span></td></tr>
+              <tr><td>快捷办公</td><td style="text-align:right">¥40,000</td><td style="text-align:right;color:#ef4444">¥35,920</td><td><span class="tag tag-orange">89.8%</span></td></tr>
+            </tbody>
+          </table>
+          <div class="table-pagination" id="settleTable-pag"></div>
+        </div>
+
+        <!-- Overdue Table -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">未回款明细</div>
+          </div>
+          <div class="table-toolbar">
+            <div class="tb-left">
+              <button class="tb-btn" onclick="toggleSort('overdueTable')" id="overdueTable-sort-btn">⇅ 倒序</button>
+              <div class="tenant-search-wrap">
+                <input type="text" id="overdueSearchInput" placeholder="搜索租户名称..." oninput="filterOverdueTable()">
+              </div>
+            </div>
+            <div class="tb-right">
+              <button class="tb-btn export-btn" onclick="exportTable('overdueTable','未回款明细')">↓ 导出 Excel</button>
+            </div>
+          </div>
+          <table class="data-table" id="overdueTable">
+            <thead>
+              <tr><th>租户名称</th><th style="text-align:right" data-type="num">应收金额</th><th style="text-align:right" data-type="num">已回款</th><th style="text-align:right" data-type="num">未回款</th><th data-type="num">账期</th><th>状态</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="highlight">锦绣服饰贸易</span></td><td style="text-align:right">¥256,000</td><td style="text-align:right">¥217,600</td><td style="text-align:right;color:#ef4444;font-weight:600">¥38,400</td><td>15天</td><td><span class="tag tag-orange">即将到期</span></td></tr>
+              <tr><td>万家生活超市</td><td style="text-align:right">¥192,000</td><td style="text-align:right">¥144,000</td><td style="text-align:right;color:#ef4444;font-weight:600">¥48,000</td><td>15天</td><td><span class="tag tag-orange">即将到期</span></td></tr>
+              <tr><td>快捷办公</td><td style="text-align:right">¥64,000</td><td style="text-align:right">¥49,600</td><td style="text-align:right;color:#ef4444;font-weight:600">¥14,400</td><td>15天</td><td><span class="tag tag-red">已过期</span></td></tr>
+              <tr><td>健康生活馆</td><td style="text-align:right">¥128,000</td><td style="text-align:right">¥96,000</td><td style="text-align:right;color:#ef4444;font-weight:600">¥32,000</td><td>15天</td><td><span class="tag tag-red">已过期</span></td></tr>
+              <tr><td>华创通讯设备</td><td style="text-align:right">¥86,000</td><td style="text-align:right">¥72,800</td><td style="text-align:right;color:#ef4444;font-weight:600">¥13,200</td><td>15天</td><td><span class="tag tag-orange">即将到期</span></td></tr>
+            </tbody>
+          </table>
+          <div class="table-pagination" id="overdueTable-pag"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Warm Dashboard Color Palette =====
+var COLORS = {
+  rose: '#e11d48',
+  blue: '#3b82f6',
+  amber: '#f59e0b',
+  green: '#22c55e',
+  purple: '#a855f7',
+  teal: '#14b8a6',
+  red: '#ef4444'
+};
+
+// ===== Tab Switching =====
+function switchTab(idx) {
+  var navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+  navItems.forEach(function(t,i){t.classList.toggle('active',i===idx);});
+  var panels = document.querySelectorAll('.tab-panel');
+  panels.forEach(function(p,i){
+    if(i===idx) { p.classList.add('active'); p.style.display='block'; }
+    else { p.classList.remove('active'); p.style.display='none'; }
+  });
+  setTimeout(function() {
+    var charts = [chartSalesTrend, chartProjectAnalysis, chartTurnover, chartPriceAnalysis, chartOrderProject, chartOrderType, chartRecoveryTrend];
+    charts.forEach(function(c) {
+      try { if (c) c.resize(); } catch(e) {}
+    });
+  }, 60);
+}
+
+function selectPill(el) {
+  document.querySelectorAll('.time-pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  var range = el.getAttribute('data-range');
+  var wrap = document.getElementById('customDateWrap');
+  if (wrap) wrap.style.display = (range === 'custom') ? 'flex' : 'none';
+  updateDashboard(range);
+}
+
+// ===== Mock Data per Time Range =====
+var rangeData = {
+  week: {
+    sales: '1,856', salesChange: '↑ 12.5%', salesChangeCls: 'up', salesSub: '日均 265 件',
+    orders: '468', ordersChange: '↑ 8.7%', ordersChangeCls: 'up', ordersSub: '客单价 ¥3,966',
+    fulfill: '97.2%', fulfillChange: '↑ 0.4%', fulfillChangeCls: 'up',
+    settle: '91.5%', settleChange: '↑ 2.1%', settleChangeCls: 'up', settleSub: '未结算 ¥32,800',
+    products: '368', productsSub: '较上周 +3',
+    turnoverRate: '76.2%', turnoverChange: '↑ 1.5%', turnoverChangeCls: 'up',
+    slowCount: '88', slowChange: '↑ 5', slowChangeCls: 'down',
+    profit: '17.8%', profitChange: '↑ 0.8%', profitChangeCls: 'up',
+    t2orders: '468', t2ordersChange: '↑ 8.7%', t2ordersChangeCls: 'up',
+    t2proj: '276', t2projSub: '占比 59.0%',
+    t2nat: '192', t2natSub: '占比 41.0%',
+    t2avg: '¥3,966', t2avgChange: '↑ ¥210', t2avgChangeCls: 'up',
+    t3recv: '¥186,000', t3recvSub: '本周',
+    t3paid: '¥170,190', t3paidChange: '↑ 6.2%', t3paidChangeCls: 'up',
+    t3rate: '91.5%', t3rateChange: '↑ 1.8%', t3rateChangeCls: 'up', t3rateBar: '91.5',
+    t3unpaid: '¥15,810', t3unpaidChange: '涉及 2 个租户', t3unpaidChangeCls: 'down'
+  },
+  month: {
+    sales: '5,420', salesChange: '↑ 15.2%', salesChangeCls: 'up', salesSub: '日均 181 件',
+    orders: '1,356', ordersChange: '↑ 10.8%', ordersChangeCls: 'up', ordersSub: '客单价 ¥4,001',
+    fulfill: '96.5%', fulfillChange: '↓ 0.3%', fulfillChangeCls: 'down',
+    settle: '88.7%', settleChange: '↑ 1.5%', settleChangeCls: 'up', settleSub: '未结算 ¥68,500',
+    products: '362', productsSub: '较上月 +8',
+    turnoverRate: '77.1%', turnoverChange: '↑ 1.8%', turnoverChangeCls: 'up',
+    slowCount: '83', slowChange: '↑ 6', slowChangeCls: 'down',
+    profit: '18.2%', profitChange: '↑ 1.0%', profitChangeCls: 'up',
+    t2orders: '1,356', t2ordersChange: '↑ 10.8%', t2ordersChangeCls: 'up',
+    t2proj: '792', t2projSub: '占比 58.4%',
+    t2nat: '564', t2natSub: '占比 41.6%',
+    t2avg: '¥4,001', t2avgChange: '↑ ¥156', t2avgChangeCls: 'up',
+    t3recv: '¥520,000', t3recvSub: '本月',
+    t3paid: '¥461,240', t3paidChange: '↑ 7.3%', t3paidChangeCls: 'up',
+    t3rate: '88.7%', t3rateChange: '↑ 2.5%', t3rateChangeCls: 'up', t3rateBar: '88.7',
+    t3unpaid: '¥58,760', t3unpaidChange: '涉及 3 个租户', t3unpaidChangeCls: 'down'
+  },
+  quarter: {
+    sales: '12,846', salesChange: '↑ 18.5%', salesChangeCls: 'up', salesSub: '日均 428 件',
+    orders: '3,264', ordersChange: '↑ 12.3%', ordersChangeCls: 'up', ordersSub: '客单价 ¥3,210',
+    fulfill: '96.8%', fulfillChange: '↓ 0.5%', fulfillChangeCls: 'down',
+    settle: '89.4%', settleChange: '↑ 3.2%', settleChangeCls: 'up', settleSub: '未结算 ¥128,500',
+    products: '368', productsSub: '较上月 +12',
+    turnoverRate: '78.5%', turnoverChange: '↑ 2.1%', turnoverChangeCls: 'up',
+    slowCount: '79', slowChange: '↑ 8', slowChangeCls: 'down',
+    profit: '18.6%', profitChange: '↑ 1.2%', profitChangeCls: 'up',
+    t2orders: '3,264', t2ordersChange: '↑ 12.3%', t2ordersChangeCls: 'up',
+    t2proj: '1,892', t2projSub: '占比 58.0%',
+    t2nat: '1,372', t2natSub: '占比 42.0%',
+    t2avg: '¥3,210', t2avgChange: '↑ ¥180', t2avgChangeCls: 'up',
+    t3recv: '¥1,280,000', t3recvSub: '本季度',
+    t3paid: '¥1,144,320', t3paidChange: '↑ 8.5%', t3paidChangeCls: 'up',
+    t3rate: '89.4%', t3rateChange: '↑ 3.2%', t3rateChangeCls: 'up', t3rateBar: '89.4',
+    t3unpaid: '¥135,680', t3unpaidChange: '涉及 3 个租户', t3unpaidChangeCls: 'down'
+  }
+};
+
+// Sales trend data per time range
+var salesTrendData = {
+  week: { labels: ['7/9','7/10','7/11','7/12','7/13','7/14','7/15'], values: [245,268,312,289,256,278,208] },
+  month: { labels: ['第1周','第2周','第3周','第4周'], values: [1280,1356,1420,1364] },
+  quarter: { labels: ['1月','2月','3月','4月','5月','6月'], values: [1280,1056,2100,1890,2450,2070] }
+};
+
+var rangePeriodLabel = { week: '较上周', month: '较上月', quarter: '较上月' };
+
+function updateDashboard(range) {
+  var d = rangeData[range];
+  if (!d) { d = rangeData.quarter; }
+  var pl = rangePeriodLabel[range] || '较上月';
+
+  // Tab-0 经营概况
+  var set = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+  var setCls = function(id, val, cls) {
+    var e = document.getElementById(id);
+    if (e) { e.textContent = val; e.className = 'kpi-change ' + (cls || 'up'); }
+  };
+  set('kv-sales', d.sales);
+  setCls('kc-sales', d.salesChange + '<span class="muted">' + pl + '</span>', d.salesChangeCls);
+  // kpi-change needs innerHTML for muted span
+  var kcSales = document.getElementById('kc-sales');
+  if (kcSales) kcSales.innerHTML = d.salesChange + '<span class="muted">' + pl + '</span>';
+  set('ks-sales', d.salesSub);
+  set('kv-orders', d.orders);
+  var kcOrders = document.getElementById('kc-orders');
+  if (kcOrders) { kcOrders.innerHTML = d.ordersChange + '<span class="muted">' + pl + '</span>'; kcOrders.className = 'kpi-change ' + d.ordersChangeCls; }
+  set('ks-orders', d.ordersSub);
+  set('kv-fulfill', d.fulfill);
+  var kcFulfill = document.getElementById('kc-fulfill');
+  if (kcFulfill) { kcFulfill.innerHTML = d.fulfillChange + '<span class="muted">' + pl + '</span>'; kcFulfill.className = 'kpi-change ' + d.fulfillChangeCls; }
+  set('kv-settle', d.settle);
+  var kcSettle = document.getElementById('kc-settle');
+  if (kcSettle) { kcSettle.innerHTML = d.settleChange + '<span class="muted">' + pl + '</span>'; kcSettle.className = 'kpi-change ' + d.settleChangeCls; }
+  set('ks-settle', d.settleSub);
+
+  // Tab-1 商品分析
+  set('kv-products', d.products);
+  set('ks-products', d.productsSub);
+  set('kpiTurnoverRate', d.turnoverRate);
+  set('kpiTurnoverChange', d.turnoverChange);
+  var ktc = document.getElementById('kpiTurnoverChange');
+  if (ktc) ktc.className = 'kpi-change ' + d.turnoverChangeCls;
+  set('kpiSlowCount', d.slowCount);
+  var ksc = document.getElementById('kpiSlowChange');
+  if (ksc) { ksc.innerHTML = d.slowChange + '<span class="muted">需关注</span>'; ksc.className = 'kpi-change ' + d.slowChangeCls; }
+  set('kv-profit', d.profit);
+  var kcProfit = document.getElementById('kc-profit');
+  if (kcProfit) { kcProfit.textContent = d.profitChange; kcProfit.className = 'kpi-change ' + d.profitChangeCls; }
+
+  // Tab-2 订单分析
+  set('kv-t2orders', d.t2orders);
+  var kcT2O = document.getElementById('kc-t2orders');
+  if (kcT2O) { kcT2O.textContent = d.t2ordersChange; kcT2O.className = 'kpi-change ' + d.t2ordersChangeCls; }
+  set('kv-t2proj', d.t2proj);
+  set('ks-t2proj', d.t2projSub);
+  set('kv-t2nat', d.t2nat);
+  set('ks-t2nat', d.t2natSub);
+  set('kv-t2avg', d.t2avg);
+  var kcT2A = document.getElementById('kc-t2avg');
+  if (kcT2A) { kcT2A.textContent = d.t2avgChange; kcT2A.className = 'kpi-change ' + d.t2avgChangeCls; }
+
+  // Tab-3 结算分析
+  set('kv-t3recv', d.t3recv);
+  set('ks-t3recv', d.t3recvSub);
+  set('kv-t3paid', d.t3paid);
+  var kcT3P = document.getElementById('kc-t3paid');
+  if (kcT3P) { kcT3P.textContent = d.t3paidChange; kcT3P.className = 'kpi-change ' + d.t3paidChangeCls; }
+  set('kv-t3rate', d.t3rate);
+  var kcT3R = document.getElementById('kc-t3rate');
+  if (kcT3R) { kcT3R.innerHTML = d.t3rateChange + '<span class="muted">' + pl + '</span>'; kcT3R.className = 'kpi-change ' + d.t3rateChangeCls; }
+  var bar = document.getElementById('kpb-t3rate');
+  if (bar) bar.style.width = d.t3rateBar + '%';
+  set('kv-t3unpaid', d.t3unpaid);
+  var kcT3U = document.getElementById('kc-t3unpaid');
+  if (kcT3U) { kcT3U.textContent = d.t3unpaidChange; kcT3U.className = 'kpi-change down'; }
+
+  // Update sales trend chart
+  updateSalesTrend(range);
+}
+
+function updateSalesTrend(range) {
+  if (!chartSalesTrend || typeof echarts === 'undefined') return;
+  var td = salesTrendData[range] || salesTrendData.quarter;
+  var maxVal = Math.max.apply(null, td.values);
+  var barData = td.values.map(function(v) {
+    var isMax = v === maxVal;
+    return {
+      value: v,
+      itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0, color: isMax ? '#34d399' : '#f43f5e'},
+        {offset:1, color: isMax ? '#22c55e' : '#e11d48'}
+      ])}
+    };
+  });
+  chartSalesTrend.setOption({
+    xAxis: { data: td.labels },
+    series: [{ data: barData }]
+  });
+}
+
+function refresh() {
+  var activePill = document.querySelector('.time-pill.active');
+  var range = activePill ? activePill.getAttribute('data-range') : 'quarter';
+  updateDashboard(range);
+}
+
+// ===== ECharts Initialization =====
+var chartSalesTrend, chartProjectAnalysis, chartTurnover, chartPriceAnalysis;
+var chartOrderProject, chartOrderType, chartRecoveryTrend;
+
+var tooltipStyle = {
+  backgroundColor: 'rgba(255,255,255,.98)',
+  borderColor: '#f3f4f6',
+  borderWidth: 1,
+  textStyle: { color: '#1f2937', fontSize: 13 },
+  extraCssText: 'box-shadow:0 4px 20px rgba(0,0,0,.1);border-radius:10px;'
+};
+
+// ===== Project Statistics - Multi-Select =====
+var projectOrderData = [
+  { name: '政企集采项目', orders: 680 },
+  { name: '教育采购专项', orders: 456 },
+  { name: '企业团购项目', orders: 380 },
+  { name: '政府补贴项目', orders: 376 },
+  { name: '军网采购项目', orders: 320 },
+  { name: '央企集采项目', orders: 288 },
+  { name: '医疗采购项目', orders: 245 },
+  { name: '金融集采项目', orders: 198 },
+  { name: '能源采购项目', orders: 165 },
+  { name: '交通集采项目', orders: 156 }
+];
+
+var psState = {
+  allProjects: projectOrderData.map(function(p) { return p.name; }),
+  selected: projectOrderData.slice(0, 5).map(function(p) { return p.name; })
+};
+
+function renderPSOptions(filter) {
+  var container = document.getElementById('psOptions');
+  var keyword = (filter || '').toLowerCase();
+  var html = '';
+  psState.allProjects.forEach(function(name) {
+    var checked = psState.selected.indexOf(name) !== -1;
+    var hidden = keyword && name.toLowerCase().indexOf(keyword) === -1;
+    var orderItem = projectOrderData.find(function(p) { return p.name === name; });
+    html += '<div class="ps-option' + (checked ? ' checked' : '') + (hidden ? ' hidden' : '') + '" data-name="' + name + '" onmousedown="event.preventDefault()" onclick="togglePSOption(\'' + name + '\')">';
+    html += '<span class="ps-check">✓</span>';
+    html += '<span style="flex:1">' + name + '</span>';
+    html += '<span class="ps-count">' + orderItem.orders + ' 单</span>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function toggleProjectSelect() {
+  var el = document.getElementById('projectOrderSelect');
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) {
+    var searchInput = el.querySelector('.ps-search-wrap input');
+    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+    renderPSOptions('');
+  }
+}
+
+function filterProjectOptions(keyword) {
+  var options = document.querySelectorAll('#psOptions .ps-option');
+  var kw = keyword.toLowerCase();
+  options.forEach(function(opt) {
+    var name = opt.getAttribute('data-name');
+    opt.classList.toggle('hidden', kw.length > 0 && name.toLowerCase().indexOf(kw) === -1);
+  });
+}
+
+function togglePSOption(name) {
+  var idx = psState.selected.indexOf(name);
+  if (idx !== -1) {
+    psState.selected.splice(idx, 1);
+  } else {
+    psState.selected.push(name);
+  }
+  var opt = document.querySelector('#psOptions .ps-option[data-name="' + name + '"]');
+  if (opt) opt.classList.toggle('checked');
+  updatePSLabel();
+  updateProjectChart();
+}
+
+function updatePSLabel() {
+  var label = document.getElementById('psLabel');
+  var count = psState.selected.length;
+  if (count === 0) {
+    label.textContent = '请选择项目';
+    label.style.color = '#9ca3af';
+  } else if (count === psState.allProjects.length) {
+    label.textContent = '全部项目 (' + count + ')';
+    label.style.color = '#e11d48';
+  } else {
+    label.textContent = '已选 ' + count + ' 个项目';
+    label.style.color = '#e11d48';
+  }
+}
+
+function updateProjectChart() {
+  var chartColors = ['#e11d48', '#3b82f6', '#f59e0b', '#a855f7', '#14b8a6', '#22c55e', '#ef4444', '#6366f1', '#ec4899', '#0ea5e9'];
+  var filtered = projectOrderData.filter(function(p) {
+    return psState.selected.indexOf(p.name) !== -1;
+  });
+  chartOrderProject.setOption({
+    tooltip: { trigger: 'axis', formatter: '{b}: {c} 单', ...tooltipStyle },
+    grid: { left: 50, right: 20, top: 20, bottom: 60 },
+    xAxis: { type: 'category', data: filtered.map(function(p) { return p.name; }), axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 11, rotate: filtered.length > 5 ? 20 : 0 }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af' } },
+    series: [{
+      type: 'bar', barWidth: '40%',
+      data: filtered.map(function(p, i) {
+        return { value: p.orders, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:chartColors[i % chartColors.length]},{offset:1,color:chartColors[i % chartColors.length] + 'cc'}]) } };
+      }),
+      label: { show: true, position: 'top', fontSize: 11, color: '#6b7280', fontWeight: 600 },
+      itemStyle: { borderRadius: [6, 6, 0, 0] }
+    }]
+  });
+}
+
+// ===== Recovery Rate Trend - Time Dimension =====
+var recoveryState = { dim: 'day', dayCount: 7, dayMode: 'preset', customStart: '2026-07-01', customEnd: '2026-07-15' };
+var monthLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+var recoveryMonthData = {
+  2024: [78.2, 79.5, 80.1, 81.3, 82.0, 81.8, 83.2, 82.5, 84.0, 83.8, 85.1, 84.6],
+  2025: [84.0, 83.5, 85.2, 86.0, 85.8, 86.5, 87.0, 86.8, 87.5, 88.0, 87.8, 88.2],
+  2026: [86.5, 87.0, 88.2, 87.5, 88.0, 89.4, 0, 0, 0, 0, 0, 0]
+};
+
+var recoveryYearData = {
+  labels: ['2022','2023','2024','2025','2026'],
+  values: [72.5, 76.8, 81.2, 86.3, 88.4]
+};
+
+function getDayLabels(count) {
+  var labels = [];
+  var today = new Date(2026, 6, 15);
+  for (var i = count - 1; i >= 0; i--) {
+    var d = new Date(today);
+    d.setDate(d.getDate() - i);
+    labels.push((d.getMonth() + 1) + '/' + d.getDate());
+  }
+  return labels;
+}
+
+function getDayValues(count) {
+  var all30 = [82.1, 83.5, 81.8, 84.2, 83.0, 85.1, 84.6, 86.0, 85.3, 87.2,
+    86.5, 84.8, 85.9, 86.2, 87.1, 85.8, 88.3, 89.0, 88.5, 89.4,
+    87.6, 88.1, 86.9, 87.5, 88.8, 89.2, 88.0, 87.3, 88.6, 89.4];
+  return all30.slice(all30.length - count);
+}
+
+function switchTimeDim(dim, btn) {
+  recoveryState.dim = dim;
+  document.querySelectorAll('.time-dim-btns .td-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('timeRangeDay').style.display = dim === 'day' ? 'flex' : 'none';
+  document.getElementById('timeRangeMonth').style.display = dim === 'month' ? 'flex' : 'none';
+  document.getElementById('timeRangeYear').style.display = dim === 'year' ? 'flex' : 'none';
+  updateRecoveryChart();
+}
+
+function onDaySelectChange(val) {
+  if (val === 'custom') {
+    document.getElementById('customDateRange').style.display = 'flex';
+    recoveryState.dayMode = 'custom';
+    onCustomDateChange();
+  } else {
+    document.getElementById('customDateRange').style.display = 'none';
+    recoveryState.dayMode = 'preset';
+    recoveryState.dayCount = parseInt(val);
+    updateRecoveryChart();
+  }
+}
+
+function onCustomDateChange() {
+  var startVal = document.getElementById('dayStartDate').value;
+  var endVal = document.getElementById('dayEndDate').value;
+  if (startVal && endVal) {
+    recoveryState.customStart = startVal;
+    recoveryState.customEnd = endVal;
+    updateRecoveryChart();
+  }
+}
+
+function getDayLabelsByRange(startStr, endStr) {
+  var labels = [];
+  var start = new Date(startStr);
+  var end = new Date(endStr);
+  var d = new Date(start);
+  while (d <= end) {
+    labels.push((d.getMonth() + 1) + '/' + d.getDate());
+    d.setDate(d.getDate() + 1);
+  }
+  return labels;
+}
+
+function updateMonthChart() {
+  updateRecoveryChart();
+}
+
+function updateYearChart() {
+  updateRecoveryChart();
+}
+
+function updateRecoveryChart() {
+  var labels, values, dim = recoveryState.dim;
+
+  if (dim === 'day') {
+    if (recoveryState.dayMode === 'custom') {
+      labels = getDayLabelsByRange(recoveryState.customStart, recoveryState.customEnd);
+      values = labels.map(function(v, i) {
+        return Math.round((85 + Math.sin(i * 0.6 + labels.length) * 3.5 + i * 0.12) * 10) / 10;
+      });
+    } else {
+      labels = getDayLabels(recoveryState.dayCount);
+      values = getDayValues(recoveryState.dayCount);
+    }
+  } else if (dim === 'month') {
+    var year = parseInt(document.getElementById('monthYearSelect').value);
+    var data = recoveryMonthData[year] || recoveryMonthData[2026];
+    labels = monthLabels.slice();
+    values = data.slice();
+    if (year === 2026) {
+      var lastIdx = 0;
+      for (var i = 0; i < values.length; i++) { if (values[i] > 0) lastIdx = i; }
+      labels = labels.slice(0, lastIdx + 1);
+      values = values.slice(0, lastIdx + 1);
+    }
+  } else {
+    var yearCount = parseInt(document.getElementById('yearRangeSelect').value);
+    labels = recoveryYearData.labels.slice(-yearCount);
+    values = recoveryYearData.values.slice(-yearCount);
+  }
+
+  var minVal = Math.min.apply(null, values);
+  var yMin = Math.max(0, Math.floor((minVal - 5) / 5) * 5);
+
+  chartRecoveryTrend.setOption({
+    tooltip: { trigger: 'axis', formatter: '{b}: {c}%', ...tooltipStyle },
+    grid: { left: 50, right: 20, top: 20, bottom: 40 },
+    xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 11, rotate: labels.length > 10 ? 30 : 0 }, axisTick: { show: false } },
+    yAxis: { type: 'value', min: yMin, max: 100, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af', formatter: '{value}%' } },
+    series: [{
+      type: 'bar', barWidth: labels.length > 15 ? '50%' : '40%',
+      data: values.map(function(v) {
+        var color = v >= 85 ? ['#34d399','#22c55e'] : v >= 80 ? ['#60a5fa','#3b82f6'] : ['#f43f5e','#e11d48'];
+        return { value: v, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:color[0]},{offset:1,color:color[1]}]) } };
+      }),
+      label: { show: labels.length <= 15, position: 'top', fontSize: 11, color: '#6b7280', fontWeight: 600, formatter: '{c}%' },
+      itemStyle: { borderRadius: [6, 6, 0, 0] }
+    }]
+  });
+}
+
+function initAllCharts() {
+  if (typeof echarts === 'undefined') { console.error('ECharts library not loaded'); return; }
+  try {
+  // 1. Sales Trend Bar Chart
+  chartSalesTrend = echarts.init(document.getElementById('chartSalesTrend'));
+  chartSalesTrend.setOption({
+    tooltip: { trigger: 'axis', formatter: '{b}: {c} 件', ...tooltipStyle },
+    grid: { left: 50, right: 20, top: 20, bottom: 40 },
+    xAxis: { type: 'category', data: ['1月','2月','3月','4月','5月','6月'], axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280' }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af' } },
+    series: [{
+      type: 'bar', barWidth: '40%',
+      data: [
+        { value: 1280, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 1056, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 2100, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 1890, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } },
+        { value: 2450, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#34d399'},{offset:1,color:'#22c55e'}]) } },
+        { value: 2070, itemStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#f43f5e'},{offset:1,color:'#e11d48'}]) } }
+      ],
+      label: { show: true, position: 'top', fontSize: 11, color: '#6b7280', fontWeight: 600 },
+      itemStyle: { borderRadius: [6, 6, 0, 0] }
+    }]
+  });
+
+  // 2. Project Analysis Pie Chart
+  var projectPieData = {
+    sales: [
+      { name: '政企集采项目', value: 3580 },
+      { name: '教育采购专项', value: 2046 },
+      { name: '企业团购项目', value: 2046 },
+      { name: '政府补贴采购', value: 1534 },
+      { name: '其他项目', value: 1023 }
+    ],
+    profit: [
+      { name: '政企集采项目', value: 428 },
+      { name: '教育采购专项', value: 356 },
+      { name: '企业团购项目', value: 285 },
+      { name: '政府补贴采购', value: 214 },
+      { name: '其他项目', value: 143 }
+    ]
+  };
+  var pieColors = [COLORS.rose, COLORS.blue, COLORS.amber, COLORS.purple, COLORS.teal];
+
+  chartProjectAnalysis = echarts.init(document.getElementById('chartProjectAnalysis'));
+  function setProjectPie(key) {
+    var suffix = key === 'sales' ? ' 件' : ' 万';
+    chartProjectAnalysis.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: {c}' + suffix + ' ({d}%)', ...tooltipStyle },
+      legend: { orient: 'vertical', right: 16, top: 'center', textStyle: { fontSize: 13, color: '#374151' }, itemWidth: 12, itemHeight: 12, itemGap: 14 },
+      color: pieColors,
+      series: [{
+        type: 'pie', radius: ['42%', '72%'], center: ['35%', '50%'],
+        label: { show: false },
+        emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+        itemStyle: { borderColor: '#fff', borderWidth: 3 },
+        data: projectPieData[key]
+      }]
+    });
+  }
+  setProjectPie('sales');
+
+  window.switchProjectPie = function(key, btnEl) {
+    btnEl.parentNode.querySelectorAll('.chart-btn').forEach(function(b){ b.classList.remove('active'); });
+    btnEl.classList.add('active');
+    setProjectPie(key);
+  };
+
+  // 3. Turnover Analysis Pie Chart (dynamic)
+  chartTurnover = echarts.init(document.getElementById('chartTurnover'));
+  updateTurnoverChart();
+
+  // 4. Price Analysis Dual Line Chart
+  chartPriceAnalysis = echarts.init(document.getElementById('chartPriceAnalysis'));
+
+  // 5. Project Statistics Bar Chart (dynamic based on selection)
+  chartOrderProject = echarts.init(document.getElementById('chartOrderProject'));
+  updateProjectChart();
+
+  // 6. Order Distribution Pie Chart (自然单 vs 项目单)
+  chartOrderType = echarts.init(document.getElementById('chartOrderType'));
+  chartOrderType.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 单 ({d}%)', ...tooltipStyle },
+    legend: { bottom: 10, textStyle: { fontSize: 13, color: '#374151' }, itemWidth: 12, itemHeight: 12, itemGap: 20 },
+    color: [COLORS.teal, COLORS.rose],
+    series: [{
+      type: 'pie', radius: ['42%', '72%'], center: ['50%', '45%'],
+      label: { show: true, formatter: '{b}\n{d}%', fontSize: 12, color: '#374151', lineHeight: 18 },
+      emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+      itemStyle: { borderColor: '#fff', borderWidth: 3 },
+      data: [
+        { name: '自然单', value: 1372 },
+        { name: '项目单', value: 1892 }
+      ]
+    }]
+  });
+
+  // 7. Recovery Rate Trend Bar Chart (dynamic based on time dimension)
+  chartRecoveryTrend = echarts.init(document.getElementById('chartRecoveryTrend'));
+  updateRecoveryChart();
+  } catch(e) { console.error('Chart init error:', e); }
+}
+
+// Init charts on load
+initAllCharts();
+
+// Window resize handler
+window.addEventListener('resize', function() {
+  [chartSalesTrend, chartProjectAnalysis, chartTurnover, chartPriceAnalysis, chartOrderProject, chartOrderType, chartRecoveryTrend].forEach(function(c) {
+    try { if (c) c.resize(); } catch(e) {}
+  });
+});
+
+// ===== Price Analysis - Panel with Search =====
+var priceProducts = [
+  {id:'p1', name:'华为Mate 60 Pro', supply:5299, quotes:{'军网':{'领先未来':6999,'邦威':7199},'政企集采':{'中科信息':6799,'领先未来':6899},'教育采购':{'华教通':7099}}},
+  {id:'p2', name:'小米14 Ultra', supply:3499, quotes:{'军网':{'领先未来':4999,'邦威':5199},'政企集采':{'中科信息':4799}}},
+  {id:'p3', name:'MacBook Air M3', supply:6499, quotes:{'政企集采':{'中科信息':8999,'领先未来':8799},'军网':{'邦威':9199}}},
+  {id:'p4', name:'戴森V15 Detect', supply:2990, quotes:{'政企集采':{'领先未来':4490,'中科信息':4390},'军网':{'领先未来':4590}}},
+  {id:'p5', name:'华为FreeBuds Pro 3', supply:699, quotes:{'教育采购':{'华教通':1099},'军网':{'领先未来':999,'邦威':1049}}},
+  {id:'p6', name:'联想ThinkPad X1', supply:7299, quotes:{'政企集采':{'中科信息':9999,'领先未来':9799}}},
+  {id:'p7', name:'罗技MX Master 3S', supply:499, quotes:{'企业团购':{'优采':799,'企服通':749},'军网':{'邦威':849}}},
+  {id:'p8', name:'华为超级快充', supply:129, quotes:{'政企集采':{'领先未来':199},'军网':{'邦威':189},'企业团购':{'优采':179}}},
+  {id:'p9', name:'三星Galaxy Buds', supply:599, quotes:{'教育采购':{'华教通':499},'军网':{'领先未来':549}}},
+  {id:'p10', name:'小米手环8 Pro', supply:199, quotes:{'企业团购':{'优采':169,'企服通':159},'教育采购':{'华教通':179}}},
+  {id:'p11', name:'iPad Air M2', supply:3999, quotes:{'教育采购':{'华教通':5499},'政企集采':{'中科信息':5299}}},
+  {id:'p12', name:'索尼WH-1000XM5', supply:1899, quotes:{'军网':{'邦威':1799,'领先未来':1899},'政企集采':{'中科信息':2099}}}
+];
+var pricePP = { project: '', platform: '' };
+
+function getPriceQuote(product) {
+  if (!pricePP.project || !pricePP.platform) return product.supply;
+  var projQuotes = product.quotes[pricePP.project];
+  if (!projQuotes) return null;
+  return projQuotes[pricePP.platform] || null;
+}
+
+function getFilteredPriceProducts() {
+  if (!pricePP.project || !pricePP.platform) return [];
+  return priceProducts.filter(function(p) {
+    return p.quotes[pricePP.project] && p.quotes[pricePP.project][pricePP.platform] !== undefined;
+  });
+}
+var selectedProducts = [];
+var activeDetailId = null;
+
+function initPricePanel() {
+  // Build project list from priceProducts quotes
+  var projects = [];
+  priceProducts.forEach(function(p) {
+    Object.keys(p.quotes).forEach(function(proj) {
+      if (projects.indexOf(proj) === -1) projects.push(proj);
+    });
+  });
+  initSS('ppProjectSelect', projects, '选择项目');
+  initSS('ppPlatformSelect', [], '请先选择项目');
+
+  // Default to first project and first platform
+  if (projects.length > 0) {
+    var defProject = projects[0];
+    var platforms = [];
+    priceProducts.forEach(function(p) {
+      if (p.quotes[defProject]) {
+        Object.keys(p.quotes[defProject]).forEach(function(plat) {
+          if (platforms.indexOf(plat) === -1) platforms.push(plat);
+        });
+      }
+    });
+    selectSSOption('ppProjectSelect', defProject);
+    initSS('ppPlatformSelect', platforms, '选择平台');
+    if (platforms.length > 0) {
+      selectSSOption('ppPlatformSelect', platforms[0]);
+    }
+    pricePP.project = defProject;
+    pricePP.platform = platforms[0] || '';
+  }
+
+  renderPriceLineChart();
+}
+
+function onPPProjectChange(project) {
+  pricePP.project = project;
+  pricePP.platform = '';
+  selectedProducts = [];
+
+  // Disable product search until platform is selected
+  var searchInput = document.getElementById('ppSearchInput');
+  searchInput.disabled = true;
+  searchInput.value = '';
+  searchInput.placeholder = project ? '请先选择平台' : '请先选择项目和平台';
+
+  var platforms = [];
+  priceProducts.forEach(function(p) {
+    if (p.quotes[project]) {
+      Object.keys(p.quotes[project]).forEach(function(plat) {
+        if (platforms.indexOf(plat) === -1) platforms.push(plat);
+      });
+    }
+  });
+
+  var platWrap = document.getElementById('ppPlatformSelect');
+  var platInput = platWrap.querySelector('.ss-input');
+  if (project) {
+    platInput.disabled = false;
+    platInput.placeholder = '选择平台';
+    initSS('ppPlatformSelect', platforms, '选择平台');
+  } else {
+    platInput.disabled = true;
+    platInput.placeholder = '请先选择项目';
+    ssState['ppPlatformSelect'].options = [];
+    renderSSMenu('ppPlatformSelect');
+  }
+
+  renderSelectedTags();
+  renderPriceLineChart();
+}
+
+function onPPPlatformChange(platform) {
+  pricePP.platform = platform;
+  selectedProducts = [];
+
+  var searchInput = document.getElementById('ppSearchInput');
+  if (platform) {
+    searchInput.disabled = false;
+    searchInput.value = '';
+    searchInput.placeholder = '搜索商品名称...';
+    // Auto-select all available products for this platform
+    var available = getFilteredPriceProducts();
+    selectedProducts = available.map(function(p) { return p.id; });
+  } else {
+    searchInput.disabled = true;
+    searchInput.value = '';
+    searchInput.placeholder = '请先选择平台';
+    selectedProducts = [];
+  }
+
+  renderPriceLineChart();
+}
+
+function clearPPProject(e) {
+  e.stopPropagation();
+  ssState['ppProjectSelect'].value = '';
+  var input = document.querySelector('#ppProjectSelect .ss-input');
+  input.value = '';
+  document.getElementById('ppProjectSelect').classList.remove('has-value');
+  onPPProjectChange('');
+}
+
+function clearPPPlatform(e) {
+  e.stopPropagation();
+  ssState['ppPlatformSelect'].value = '';
+  var input = document.querySelector('#ppPlatformSelect .ss-input');
+  input.value = '';
+  document.getElementById('ppPlatformSelect').classList.remove('has-value');
+  onPPPlatformChange('');
+}
+
+function onPriceSearchFocus() {
+  var keyword = document.getElementById('ppSearchInput').value;
+  renderDropdown(keyword);
+  document.getElementById('ppDropdown').classList.add('show');
+}
+
+function onPriceSearchBlur() {
+  setTimeout(function() {
+    document.getElementById('ppDropdown').classList.remove('show');
+  }, 200);
+}
+
+function renderDropdown(filter) {
+  var dropdown = document.getElementById('ppDropdown');
+  var keyword = (filter || '').toLowerCase();
+  if (!pricePP.project || !pricePP.platform) {
+    dropdown.innerHTML = '<div class="pp-empty">请先选择项目和平台</div>';
+    return;
+  }
+  var available = getFilteredPriceProducts();
+  var filtered = keyword ? available.filter(function(p) {
+    return p.name.toLowerCase().indexOf(keyword) > -1;
+  }) : available;
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div class="pp-empty">未找到匹配商品</div>';
+    return;
+  }
+  var html = '';
+  filtered.forEach(function(p) {
+    var isChecked = selectedProducts.indexOf(p.id) > -1;
+    var cls = 'pp-item' + (isChecked ? ' checked' : '');
+    var quote = getPriceQuote(p);
+    var diff = quote - p.supply;
+    var diffStr = (diff >= 0 ? '+' : '') + '¥' + diff.toLocaleString();
+    var diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+    html += '<div class="' + cls + '" onmousedown="event.preventDefault();togglePriceProduct(\'' + p.id + '\')">'
+      + '<input type="checkbox"' + (isChecked ? ' checked' : '') + ' tabindex="-1">'
+      + '<span class="pp-name">' + p.name + '</span>'
+      + '<span class="pp-prices"><span>供¥' + p.supply.toLocaleString() + '</span><span>提¥' + quote.toLocaleString() + '</span><span style="color:' + diffColor + ';font-weight:500">' + diffStr + '</span></span>'
+      + '</div>';
+  });
+  dropdown.innerHTML = html;
+}
+
+function renderSelectedTags() {
+  // Tags UI removed - no-op
+}
+
+function toggleTagDetail() {
+  // Tags UI removed - no-op
+}
+
+function togglePriceProduct(id) {
+  var idx = selectedProducts.indexOf(id);
+  if (idx > -1) {
+    selectedProducts.splice(idx, 1);
+  } else {
+    selectedProducts.push(id);
+  }
+  var searchVal = document.getElementById('ppSearchInput').value;
+  renderDropdown(searchVal);
+  renderPriceLineChart();
+}
+
+function filterPriceProducts() {
+  var keyword = document.getElementById('ppSearchInput').value;
+  renderDropdown(keyword);
+  document.getElementById('ppDropdown').classList.add('show');
+}
+
+function renderPriceLineChart() {
+  var items = priceProducts.filter(function(p){return selectedProducts.indexOf(p.id) > -1;});
+  if (items.length === 0) {
+    chartPriceAnalysis.clear();
+    chartPriceAnalysis.setOption({
+      title: { text: '请选择至少一个商品', left: 'center', top: 'center', textStyle: { color: '#9ca3af', fontSize: 14, fontWeight: 'normal' } }
+    });
+    return;
+  }
+
+  var names = items.map(function(p){ return p.name.length > 8 ? p.name.slice(0,8)+'..' : p.name; });
+  var supplyData = items.map(function(p){ return p.supply; });
+  var quoteData = items.map(function(p){ return getPriceQuote(p); });
+
+  var areaData = [];
+  for (var i = 0; i < items.length - 1; i++) {
+    var q1 = getPriceQuote(items[i]);
+    var q2 = getPriceQuote(items[i+1]);
+    var diff1 = q1 - items[i].supply;
+    var diff2 = q2 - items[i+1].supply;
+    var isPositive = (diff1 >= 0 && diff2 >= 0);
+    areaData.push([
+      { xAxis: names[i], itemStyle: { color: isPositive ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)' } },
+      { xAxis: names[i + 1] }
+    ]);
+  }
+
+  var ppLabel = pricePP.project && pricePP.platform ? (pricePP.project + ' / ' + pricePP.platform) : '';
+
+  chartPriceAnalysis.setOption({
+    tooltip: {
+      trigger: 'axis',
+      ...tooltipStyle,
+      formatter: function(params) {
+        var idx = params[0].dataIndex;
+        var p = items[idx];
+        var quote = getPriceQuote(p);
+        var diff = quote - p.supply;
+        var diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+        var diffText = (diff >= 0 ? '+' : '') + '¥' + diff.toLocaleString();
+        return '<strong>' + p.name + '</strong>' + (ppLabel ? '<br/><span style="color:#9ca3af;font-size:11px">' + ppLabel + '</span>' : '') + '<br/>'
+          + '<span style="color:#3b82f6">供货价: ¥' + p.supply.toLocaleString() + '</span><br/>'
+          + '<span style="color:#f97316">提报价: ¥' + quote.toLocaleString() + '</span><br/>'
+          + '<span style="color:' + diffColor + '">利润差: ' + diffText + '</span>';
+      }
+    },
+    grid: { left: 60, right: 20, top: 20, bottom: 40 },
+    xAxis: { type: 'category', data: names, axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { color: '#6b7280', fontSize: 11, rotate: items.length > 5 ? 20 : 0 }, axisTick: { show: false } },
+    yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6', type: 'dashed' } }, axisLabel: { color: '#9ca3af', formatter: '¥{value}' } },
+    series: [
+      {
+        name: '供货价', type: 'line', data: supplyData,
+        lineStyle: { color: COLORS.blue, width: 2.5 },
+        itemStyle: { color: COLORS.blue },
+        symbolSize: 8, symbol: 'circle'
+      },
+      {
+        name: '提报价', type: 'line', data: quoteData,
+        lineStyle: { color: COLORS.amber, width: 2.5 },
+        itemStyle: { color: COLORS.amber },
+        symbolSize: 8, symbol: 'circle',
+        markArea: { silent: true, data: areaData }
+      }
+    ]
+  }, true);
+}
+
+// ===== Tenant Analysis =====
+var tenantData = [
+  { name: '星辰数码科技', qty: 3256, amount: 1890000, recovered: 1756000, rate: 92.9, orders: 486 },
+  { name: '明远教育集团', qty: 2180, amount: 1250000, recovered: 1125000, rate: 90.0, orders: 352 },
+  { name: '锦绣服饰贸易', qty: 1920, amount: 980000, recovered: 833000, rate: 85.0, orders: 298 },
+  { name: '优学科技', qty: 1350, amount: 760000, recovered: 608000, rate: 80.0, orders: 215 },
+  { name: '万家生活超市', qty: 1120, amount: 520000, recovered: 390000, rate: 75.0, orders: 186 },
+  { name: '优品家居', qty: 980, amount: 450000, recovered: 360000, rate: 80.0, orders: 162 },
+  { name: '快捷办公', qty: 756, amount: 320000, recovered: 240000, rate: 75.0, orders: 128 },
+  { name: '健康生活馆', qty: 620, amount: 280000, recovered: 224000, rate: 80.0, orders: 96 },
+  { name: '华创通讯设备', qty: 580, amount: 265000, recovered: 225250, rate: 85.0, orders: 88 },
+  { name: '盛达电子', qty: 520, amount: 238000, recovered: 178500, rate: 75.0, orders: 76 },
+  { name: '中联办公', qty: 460, amount: 198000, recovered: 168300, rate: 85.0, orders: 68 },
+  { name: '乐享生活', qty: 380, amount: 165000, recovered: 123750, rate: 75.0, orders: 55 },
+  { name: '智联科技', qty: 320, amount: 142000, recovered: 113600, rate: 80.0, orders: 48 },
+  { name: '汇通贸易', qty: 280, amount: 118000, recovered: 88500, rate: 75.0, orders: 42 },
+  { name: '新锐数码', qty: 220, amount: 95000, recovered: 66500, rate: 70.0, orders: 35 }
+];
+
+function getTagClass(rate) {
+  if (rate >= 90) return 'tag-green';
+  if (rate >= 80) return 'tag-blue';
+  if (rate >= 70) return 'tag-orange';
+  return 'tag-red';
+}
+
+function getBarColor(rate) {
+  if (rate >= 90) return '#22c55e';
+  if (rate >= 80) return '#3b82f6';
+  if (rate >= 70) return '#f97316';
+  return '#ef4444';
+}
+
+function renderTenantTable() {
+  var keyword = (document.getElementById('tenantSearchInput').value || '').toLowerCase();
+  var rankSelect = document.getElementById('rankSelect');
+  var rankValue = rankSelect.value;
+
+  // Filter by search keyword
+  var filtered = tenantData.filter(function(t) {
+    return t.name.toLowerCase().indexOf(keyword) > -1;
+  });
+
+  // Get rank range
+  var from = 0, to;
+  if (rankValue === 'custom') {
+    from = Math.max(1, parseInt(document.getElementById('rankFrom').value) || 1) - 1;
+    to = Math.max(from + 1, parseInt(document.getElementById('rankTo').value) || 10);
+  } else {
+    to = parseInt(rankValue);
+  }
+
+  // When searching, show all matches; otherwise apply rank range
+  var displayData;
+  if (keyword) {
+    displayData = filtered;
+  } else {
+    displayData = filtered.slice(from, to);
+  }
+
+  // Update summary
+  var totalQty = 0, totalAmount = 0, totalRecovered = 0, totalOrders = 0;
+  displayData.forEach(function(t) {
+    totalQty += t.qty;
+    totalAmount += t.amount;
+    totalRecovered += t.recovered;
+    totalOrders += t.orders;
+  });
+  var summaryEl = document.getElementById('tenantSummary');
+  summaryEl.innerHTML = '共 <strong>' + displayData.length + '</strong> 个租户 | '
+    + '拿货量 ' + totalQty.toLocaleString() + ' 件 | '
+    + '总金额 ¥' + (totalAmount / 10000).toFixed(1) + ' 万 | '
+    + '总订单 ' + totalOrders.toLocaleString() + ' 笔';
+
+  // Render rows
+  var tbody = document.getElementById('tenantTableBody');
+  if (displayData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af;">未找到匹配的租户</td></tr>';
+  } else {
+    var html = '';
+    displayData.forEach(function(t, i) {
+      var originalRank = tenantData.indexOf(t) + 1;
+      var tagCls = getTagClass(t.rate);
+      var barColor = getBarColor(t.rate);
+      var nameHtml = keyword ? '<span class="highlight">' + t.name + '</span>' : t.name;
+      html += '<tr>'
+        + '<td><strong>' + originalRank + '</strong></td>'
+        + '<td>' + nameHtml + '</td>'
+        + '<td class="num">' + t.qty.toLocaleString() + '</td>'
+        + '<td class="num">¥' + t.amount.toLocaleString() + '</td>'
+        + '<td class="num">¥' + t.recovered.toLocaleString() + '</td>'
+        + '<td><span class="tag ' + tagCls + '">' + t.rate.toFixed(1) + '%</span></td>'
+        + '<td class="num">' + t.orders.toLocaleString() + '</td>'
+        + '<td><div class="progress-bar"><div class="fill" style="width:' + t.rate + '%;background:' + barColor + '"></div></div></td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  // Re-init pagination state
+  pagState['tenantTable'] = { page: 1, pageSize: 10, asc: false };
+  renderTenantPagination();
+}
+
+function renderTenantPagination() {
+  var tableId = 'tenantTable';
+  var st = pagState[tableId];
+  if (!st) return;
+  var tbody = document.getElementById('tenantTableBody');
+  var allRows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+  var total = allRows.length;
+  var totalPages = Math.max(1, Math.ceil(total / st.pageSize));
+  if (st.page > totalPages) st.page = totalPages;
+
+  var start = (st.page - 1) * st.pageSize;
+  var end = start + st.pageSize;
+  allRows.forEach(function(row, i) {
+    row.style.display = (i >= start && i < end) ? '' : 'none';
+  });
+
+  var pag = document.getElementById(tableId + '-pag');
+  if (!pag) return;
+  var html = '<span>共 ' + total + ' 条，第 ' + st.page + '/' + totalPages + ' 页</span>';
+  html += '<div class="pg-controls">';
+  html += '<span class="pg-btn' + (st.page <= 1 ? ' disabled' : '') + '" onclick="goTenantPage(' + (st.page - 1) + ')">‹</span>';
+  for (var p = 1; p <= totalPages; p++) {
+    html += '<span class="pg-btn' + (p === st.page ? ' active' : '') + '" onclick="goTenantPage(' + p + ')">' + p + '</span>';
+  }
+  html += '<span class="pg-btn' + (st.page >= totalPages ? ' disabled' : '') + '" onclick="goTenantPage(' + (st.page + 1) + ')">›</span>';
+  html += '</div>';
+  pag.innerHTML = html;
+}
+
+function goTenantPage(page) {
+  var st = pagState['tenantTable'];
+  if (!st) return;
+  var total = document.getElementById('tenantTableBody').querySelectorAll('tr').length;
+  var totalPages = Math.max(1, Math.ceil(total / st.pageSize));
+  if (page < 1 || page > totalPages) return;
+  st.page = page;
+  renderTenantPagination();
+}
+
+function changeRankRange() {
+  var val = document.getElementById('rankSelect').value;
+  document.getElementById('rankCustom').style.display = val === 'custom' ? 'flex' : 'none';
+  renderTenantTable();
+}
+
+// ===== Product Sales Ranking =====
+var productData = [
+  { name: '华为Mate 60 Pro 12+256G', supply: 5299, quote: 6999, sales: 1820, project: '军网', platform: '领先未来' },
+  { name: '小米14 Ultra 16+512G', supply: 3499, quote: 4999, sales: 1256, project: '军网', platform: '邦威' },
+  { name: 'MacBook Air M3 13寸', supply: 6499, quote: 8999, sales: 890, project: '政企集采', platform: '中科信息' },
+  { name: '戴森V15 Detect无线路由', supply: 2990, quote: 4490, sales: 680, project: '政企集采', platform: '领先未来' },
+  { name: '华为FreeBuds Pro 3', supply: 699, quote: 1099, sales: 620, project: '教育采购', platform: '华教通' },
+  { name: '联想ThinkPad X1 Carbon', supply: 7299, quote: 9999, sales: 456, project: '政企集采', platform: '中科信息' },
+  { name: '罗技MX Master 3S', supply: 499, quote: 799, sales: 380, project: '企业团购', platform: '优采' },
+  { name: 'iPad Air M2 11寸', supply: 3999, quote: 5499, sales: 345, project: '教育采购', platform: '华教通' },
+  { name: '索尼WH-1000XM5耳机', supply: 1899, quote: 2499, sales: 312, project: '军网', platform: '领先未来' },
+  { name: '华为Watch GT4手表', supply: 899, quote: 1499, sales: 288, project: '军网', platform: '邦威' },
+  { name: '小米手环8 Pro', supply: 199, quote: 299, sales: 256, project: '企业团购', platform: '企服通' },
+  { name: '华为超级快充车载充电器', supply: 129, quote: 199, sales: 198, project: '政企集采', platform: '领先未来' },
+  { name: '戴尔U2723QE显示器', supply: 2899, quote: 3999, sales: 168, project: '军网', platform: '邦威' },
+  { name: '三星Galaxy Buds3 Pro', supply: 799, quote: 1199, sales: 145, project: '教育采购', platform: '华教通' },
+  { name: '得力办公套装', supply: 89, quote: 159, sales: 120, project: '企业团购', platform: '优采' }
+];
+
+var projectPlatformMap = {};
+productData.forEach(function(p) {
+  if (!projectPlatformMap[p.project]) projectPlatformMap[p.project] = [];
+  if (projectPlatformMap[p.project].indexOf(p.platform) === -1) {
+    projectPlatformMap[p.project].push(p.platform);
+  }
+});
+
+var productViewMode = 'order';
+var selectedFilter = { project: '', platform: '' };
+
+var turnoverRules = { best: 500, normal: 150, warn: 50 };
+var TURNOVER_DEFAULTS = { best: 500, normal: 150, warn: 50 };
+
+function getProductStatus(sales) {
+  if (sales >= turnoverRules.best) return { text: '畅销', cls: 'tag-green' };
+  if (sales >= turnoverRules.normal) return { text: '正常', cls: 'tag-blue' };
+  if (sales >= turnoverRules.warn) return { text: '滞销预警', cls: 'tag-orange' };
+  return { text: '滞销', cls: 'tag-red' };
+}
+
+function calcTurnoverDistribution() {
+  var counts = { best: 0, normal: 0, warn: 0, slow: 0 };
+  if (!productData || !productData.length) return counts;
+  productData.forEach(function(p) {
+    if (p.sales >= turnoverRules.best) counts.best++;
+    else if (p.sales >= turnoverRules.normal) counts.normal++;
+    else if (p.sales >= turnoverRules.warn) counts.warn++;
+    else counts.slow++;
+  });
+  return counts;
+}
+
+function updateTurnoverChart() {
+  var c = calcTurnoverDistribution();
+  var total = c.best + c.normal + c.warn + c.slow;
+  chartTurnover.setOption({
+    tooltip: {
+      trigger: 'item', ...tooltipStyle,
+      formatter: function(params) {
+        return '<strong>' + params.name + '</strong><br/>数量: ' + params.value + ' 个 (' + params.percent + '%)';
+      }
+    },
+    legend: {
+      orient: 'horizontal', bottom: 8, left: 'center',
+      textStyle: { fontSize: 12, color: '#374151' },
+      itemWidth: 10, itemHeight: 10, itemGap: 16
+    },
+    color: [COLORS.green, COLORS.blue, COLORS.amber, COLORS.red],
+    series: [{
+      type: 'pie', radius: ['40%', '68%'], center: ['50%', '42%'],
+      label: {
+        show: true, position: 'outside',
+        formatter: function(p) { return p.value > 0 ? p.value + '个' : ''; },
+        fontSize: 11, color: '#6b7280'
+      },
+      emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } },
+      itemStyle: { borderColor: '#fff', borderWidth: 3 },
+      data: [
+        { name: '畅销品', value: c.best },
+        { name: '正常品', value: c.normal },
+        { name: '滞销预警', value: c.warn },
+        { name: '滞销品', value: c.slow }
+      ]
+    }]
+  }, true);
+
+  // Update KPI cards
+  var activeRate = total > 0 ? ((c.best + c.normal) / total * 100).toFixed(1) : '0.0';
+  var slowCount = c.warn + c.slow;
+  var rateEl = document.getElementById('kpiTurnoverRate');
+  var slowEl = document.getElementById('kpiSlowCount');
+  if (rateEl) rateEl.textContent = activeRate + '%';
+  if (slowEl) slowEl.textContent = slowCount;
+}
+
+function updateTurnoverRuleSummary() {
+  var summary = document.getElementById('turnoverRuleSummary');
+  if (!summary) return;
+  summary.innerHTML =
+    '<span class="tr-dot green"></span>畅销 ≥' + turnoverRules.best + ' &nbsp;' +
+    '<span class="tr-dot blue"></span>正常 ≥' + turnoverRules.normal + ' &nbsp;' +
+    '<span class="tr-dot amber"></span>预警 ≥' + turnoverRules.warn + ' &nbsp;' +
+    '<span class="tr-dot red"></span>滞销 &lt;' + turnoverRules.warn;
+}
+
+function openTurnoverModal() {
+  var modal = document.getElementById('turnoverModal');
+  if (!modal) return;
+  document.getElementById('modalRuleBest').value = turnoverRules.best;
+  document.getElementById('modalRuleNormal').value = turnoverRules.normal;
+  document.getElementById('modalRuleWarn').value = turnoverRules.warn;
+  modal.classList.add('show');
+}
+
+function closeTurnoverModal() {
+  var modal = document.getElementById('turnoverModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function applyTurnoverRules() {
+  var best = parseInt(document.getElementById('modalRuleBest').value) || 0;
+  var normal = parseInt(document.getElementById('modalRuleNormal').value) || 0;
+  var warn = parseInt(document.getElementById('modalRuleWarn').value) || 0;
+
+  // Validate ordering: best > normal > warn >= 0
+  if (best <= normal || normal <= warn || warn < 0) {
+    alert('规则阈值需满足：畅销 > 正常 > 滞销预警 ≥ 0');
+    return;
+  }
+
+  turnoverRules.best = best;
+  turnoverRules.normal = normal;
+  turnoverRules.warn = warn;
+  updateTurnoverRuleSummary();
+  closeTurnoverModal();
+  try { updateTurnoverChart(); } catch(e) {}
+  try { renderProductTable(); } catch(e) {}
+}
+
+function resetTurnoverRules() {
+  turnoverRules.best = TURNOVER_DEFAULTS.best;
+  turnoverRules.normal = TURNOVER_DEFAULTS.normal;
+  turnoverRules.warn = TURNOVER_DEFAULTS.warn;
+  document.getElementById('modalRuleBest').value = TURNOVER_DEFAULTS.best;
+  document.getElementById('modalRuleNormal').value = TURNOVER_DEFAULTS.normal;
+  document.getElementById('modalRuleWarn').value = TURNOVER_DEFAULTS.warn;
+  updateTurnoverRuleSummary();
+  closeTurnoverModal();
+  try { updateTurnoverChart(); } catch(e) {}
+  try { renderProductTable(); } catch(e) {}
+}
+
+// Click outside modal to close
+var turnoverModalEl = document.getElementById('turnoverModal');
+if (turnoverModalEl) {
+  turnoverModalEl.addEventListener('click', function(e) {
+    if (e.target === turnoverModalEl) closeTurnoverModal();
+  });
+}
+
+// --- Searchable Select Component ---
+var ssState = {};
+var ssCloseTimer = null;
+
+function initSS(ssId, options, placeholder) {
+  ssState[ssId] = { options: options, value: '', placeholder: placeholder || '请选择' };
+  renderSSMenu(ssId);
+}
+
+function renderSSMenu(ssId) {
+  var menu = document.querySelector('#' + ssId + ' .ss-menu');
+  var state = ssState[ssId];
+  if (!state.options.length) {
+    menu.innerHTML = '<div class="ss-empty">暂无选项</div>';
+    return;
+  }
+  var html = '';
+  state.options.forEach(function(opt) {
+    var sel = opt === state.value ? ' selected' : '';
+    html += '<div class="ss-option' + sel + '" onmousedown="event.preventDefault();selectSSOption(\'' + ssId + '\',\'' + opt + '\')">' + opt + '</div>';
+  });
+  menu.innerHTML = html;
+}
+
+function openSSMenu(ssId) {
+  if (ssCloseTimer) { clearTimeout(ssCloseTimer); ssCloseTimer = null; }
+  document.querySelectorAll('.search-select.open').forEach(function(el) {
+    if (el.id !== ssId) el.classList.remove('open');
+  });
+  var wrap = document.getElementById(ssId);
+  var input = wrap.querySelector('.ss-input');
+  var state = ssState[ssId];
+  if (state.value) {
+    input.value = '';
+    showAllSSOptions(ssId);
+  }
+  wrap.classList.add('open');
+  renderSSMenu(ssId);
+}
+
+function closeSSMenuDelayed(ssId) {
+  ssCloseTimer = setTimeout(function() {
+    var wrap = document.getElementById(ssId);
+    wrap.classList.remove('open');
+    var state = ssState[ssId];
+    var input = wrap.querySelector('.ss-input');
+    if (state.value) input.value = state.value;
+    else { input.value = ''; input.placeholder = state.placeholder; }
+  }, 200);
+}
+
+function filterSSOptions(ssId) {
+  var input = document.querySelector('#' + ssId + ' .ss-input');
+  var keyword = input.value.toLowerCase();
+  var menu = document.querySelector('#' + ssId + ' .ss-menu');
+  var options = menu.querySelectorAll('.ss-option');
+  var visibleCount = 0;
+  options.forEach(function(opt) {
+    var text = opt.textContent.toLowerCase();
+    var match = !keyword || text.indexOf(keyword) > -1;
+    opt.classList.toggle('hidden', !match);
+    if (match) visibleCount++;
+  });
+  var emptyEl = menu.querySelector('.ss-empty');
+  if (visibleCount === 0) {
+    if (!emptyEl) {
+      var div = document.createElement('div');
+      div.className = 'ss-empty';
+      div.textContent = '无匹配结果';
+      menu.appendChild(div);
+    }
+  } else if (emptyEl) {
+    emptyEl.remove();
+  }
+}
+
+function showAllSSOptions(ssId) {
+  var menu = document.querySelector('#' + ssId + ' .ss-menu');
+  menu.querySelectorAll('.ss-option').forEach(function(opt) {
+    opt.classList.remove('hidden');
+  });
+  var emptyEl = menu.querySelector('.ss-empty');
+  if (emptyEl) emptyEl.remove();
+}
+
+function selectSSOption(ssId, value) {
+  if (ssCloseTimer) { clearTimeout(ssCloseTimer); ssCloseTimer = null; }
+  var wrap = document.getElementById(ssId);
+  var input = wrap.querySelector('.ss-input');
+  var state = ssState[ssId];
+  state.value = value;
+  input.value = value;
+  wrap.classList.remove('open');
+  wrap.classList.add('has-value');
+  renderSSMenu(ssId);
+
+  if (ssId === 'projectSelect') {
+    onProjectChange(value);
+  }
+  if (ssId === 'platformSelect') {
+    selectedFilter.platform = value;
+    renderProductTable();
+  }
+  if (ssId === 'ppProjectSelect') {
+    onPPProjectChange(value);
+  }
+  if (ssId === 'ppPlatformSelect') {
+    onPPPlatformChange(value);
+  }
+}
+
+function clearSSValue(ssId, e) {
+  e.stopPropagation();
+  var wrap = document.getElementById(ssId);
+  var input = wrap.querySelector('.ss-input');
+  var state = ssState[ssId];
+  state.value = '';
+  input.value = '';
+  wrap.classList.remove('has-value');
+  renderSSMenu(ssId);
+
+  if (ssId === 'projectSelect') {
+    selectedFilter.project = '';
+    // Reset platform
+    var platWrap = document.getElementById('platformSelect');
+    var platInput = platWrap.querySelector('.ss-input');
+    platInput.disabled = true;
+    platInput.value = '';
+    platInput.placeholder = '请先选择项目';
+    platWrap.classList.remove('has-value');
+    ssState['platformSelect'].value = '';
+    ssState['platformSelect'].options = [];
+    renderSSMenu('platformSelect');
+    selectedFilter.platform = '';
+    renderProductTable();
+  }
+  if (ssId === 'platformSelect') {
+    selectedFilter.platform = '';
+    renderProductTable();
+  }
+}
+
+function onProjectChange(project) {
+  selectedFilter.project = project;
+  var platWrap = document.getElementById('platformSelect');
+  var platInput = platWrap.querySelector('.ss-input');
+
+  // Reset platform selection
+  platInput.value = '';
+  platWrap.classList.remove('has-value');
+  ssState['platformSelect'].value = '';
+  selectedFilter.platform = '';
+
+  if (project) {
+    var platforms = projectPlatformMap[project] || [];
+    platInput.disabled = false;
+    platInput.placeholder = '选择平台';
+    initSS('platformSelect', platforms, '选择平台');
+  } else {
+    platInput.disabled = true;
+    platInput.placeholder = '请先选择项目';
+    ssState['platformSelect'].options = [];
+    renderSSMenu('platformSelect');
+  }
+  renderProductTable();
+}
+
+// --- View Switching ---
+function switchProductView(mode, btn) {
+  productViewMode = mode;
+  document.querySelectorAll('#productViewBtns .chart-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+
+  var projSelect = document.getElementById('projectSelect');
+  var platSelect = document.getElementById('platformSelect');
+  if (mode === 'project') {
+    projSelect.style.display = '';
+    platSelect.style.display = '';
+  } else {
+    projSelect.style.display = 'none';
+    platSelect.style.display = 'none';
+  }
+  renderProductTable();
+}
+
+function renderProductTable() {
+  var thead = document.getElementById('productTableHead');
+  var tbody = document.getElementById('productTableBody');
+
+  if (productViewMode === 'order') {
+    thead.innerHTML = '<tr>'
+      + '<th style="width:40px">#</th>'
+      + '<th>商品名称</th>'
+      + '<th data-type="num">供货价</th>'
+      + '<th data-type="num">平均提报价</th>'
+      + '<th style="text-align:right" data-type="num">利润差</th>'
+      + '<th style="text-align:right" data-type="num">销量</th>'
+      + '<th style="text-align:right" data-type="num">销售额</th>'
+      + '<th>状态</th>'
+      + '</tr>';
+  } else {
+    thead.innerHTML = '<tr>'
+      + '<th style="width:40px">#</th>'
+      + '<th>商品名称</th>'
+      + '<th>项目</th>'
+      + '<th>平台</th>'
+      + '<th data-type="num">供货价</th>'
+      + '<th data-type="num">平均提报价</th>'
+      + '<th style="text-align:right" data-type="num">利润差</th>'
+      + '<th style="text-align:right" data-type="num">销量</th>'
+      + '<th style="text-align:right" data-type="num">销售额</th>'
+      + '<th>状态</th>'
+      + '</tr>';
+  }
+
+  var filtered = productData.filter(function(p) {
+    if (productViewMode === 'project') {
+      if (selectedFilter.project && p.project !== selectedFilter.project) return false;
+      if (selectedFilter.platform && p.platform !== selectedFilter.platform) return false;
+    }
+    return true;
+  });
+
+  var displayData = filtered.slice(0, 10);
+  var colCount = productViewMode === 'order' ? 8 : 10;
+
+  if (displayData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align:center;padding:40px;color:#9ca3af;">暂无商品数据</td></tr>';
+  } else {
+    var html = '';
+    displayData.forEach(function(p, i) {
+      var diff = p.quote - p.supply;
+      var diffStr = '¥' + diff.toLocaleString();
+      var diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+      var revenue = p.sales * p.quote;
+      var status = getProductStatus(p.sales);
+      html += '<tr>';
+      html += '<td><strong>' + (i + 1) + '</strong></td>';
+      html += '<td>' + (i < 3 ? '<span class="highlight">' + p.name + '</span>' : p.name) + '</td>';
+      if (productViewMode === 'project') {
+        html += '<td><span class="tag tag-blue">' + p.project + '</span></td>';
+        html += '<td>' + p.platform + '</td>';
+      }
+      html += '<td>¥' + p.supply.toLocaleString() + '</td>';
+      html += '<td>¥' + p.quote.toLocaleString() + '</td>';
+      html += '<td style="text-align:right;color:' + diffColor + ';font-weight:600">' + diffStr + '</td>';
+      html += '<td style="text-align:right">' + p.sales.toLocaleString() + '</td>';
+      html += '<td style="text-align:right">¥' + revenue.toLocaleString() + '</td>';
+      html += '<td><span class="tag ' + status.cls + '">' + status.text + '</span></td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  pagState['productTable'] = { page: 1, pageSize: 10, asc: false };
+  renderPagination('productTable');
+}
+
+function initProductSelects() {
+  var projects = Object.keys(projectPlatformMap).sort();
+  initSS('projectSelect', projects, '选择项目');
+  initSS('platformSelect', [], '请先选择项目');
+}
+
+// Close all search-select menus and project-select on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-select')) {
+    document.querySelectorAll('.search-select.open').forEach(function(el) {
+      el.classList.remove('open');
+      var state = ssState[el.id];
+      var input = el.querySelector('.ss-input');
+      if (state && state.value) input.value = state.value;
+      else { input.value = ''; if (state) input.placeholder = state.placeholder; }
+    });
+  }
+  var projectSelect = document.getElementById('projectOrderSelect');
+  if (projectSelect && !projectSelect.contains(e.target)) {
+    projectSelect.classList.remove('open');
+  }
+});
+var pagState = {};
+function initPagination(tableId, pageSize) {
+  pagState[tableId] = { page: 1, pageSize: pageSize || 5, asc: false };
+  renderPagination(tableId);
+}
+
+function renderPagination(tableId) {
+  var st = pagState[tableId];
+  if (!st) return;
+  var table = document.getElementById(tableId);
+  var tbody = table.querySelector('tbody');
+  var allRows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+  var total = allRows.length;
+  var totalPages = Math.max(1, Math.ceil(total / st.pageSize));
+  if (st.page > totalPages) st.page = totalPages;
+
+  // Show/hide rows for current page
+  var start = (st.page - 1) * st.pageSize;
+  var end = start + st.pageSize;
+  allRows.forEach(function(row, i) {
+    row.style.display = (i >= start && i < end) ? '' : 'none';
+  });
+
+  // Build pagination controls
+  var pag = document.getElementById(tableId + '-pag');
+  if (!pag) return;
+  var html = '<span>共 ' + total + ' 条，第 ' + st.page + '/' + totalPages + ' 页</span>';
+  html += '<div class="pg-controls">';
+  html += '<span class="pg-btn' + (st.page <= 1 ? ' disabled' : '') + '" onclick="goPage(\'' + tableId + '\',' + (st.page - 1) + ')">‹</span>';
+  for (var p = 1; p <= totalPages; p++) {
+    html += '<span class="pg-btn' + (p === st.page ? ' active' : '') + '" onclick="goPage(\'' + tableId + '\',' + p + ')">' + p + '</span>';
+  }
+  html += '<span class="pg-btn' + (st.page >= totalPages ? ' disabled' : '') + '" onclick="goPage(\'' + tableId + '\',' + (st.page + 1) + ')">›</span>';
+  html += '</div>';
+  pag.innerHTML = html;
+}
+
+function goPage(tableId, page) {
+  var st = pagState[tableId];
+  if (!st) return;
+  var table = document.getElementById(tableId);
+  var total = table.querySelector('tbody').querySelectorAll('tr').length;
+  var totalPages = Math.max(1, Math.ceil(total / st.pageSize));
+  if (page < 1 || page > totalPages) return;
+  st.page = page;
+  renderPagination(tableId);
+}
+
+// ===== Sort =====
+function toggleSort(tableId) {
+  var st = pagState[tableId];
+  if (!st) { st = { page: 1, pageSize: 5, asc: false }; pagState[tableId] = st; }
+  st.asc = !st.asc;
+  st.page = 1;
+
+  // Update button text
+  var btn = document.getElementById(tableId + '-sort-btn');
+  if (btn) btn.textContent = st.asc ? '⇅ 正序' : '⇅ 倒序';
+
+  var table = document.getElementById(tableId);
+  var tbody = table.querySelector('tbody');
+  var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+
+  // Find first numeric or date column to sort by
+  var ths = table.querySelectorAll('thead th');
+  var sortCol = -1;
+  var sortType = 'num';
+  for (var i = 0; i < ths.length; i++) {
+    var dt = ths[i].getAttribute('data-type');
+    if (dt === 'num' || dt === 'date') { sortCol = i; sortType = dt; break; }
+  }
+  if (sortCol === -1) sortCol = 0; // fallback to first col
+
+  rows.sort(function(a, b) {
+    var av = getCellSortValue(a.cells[sortCol], sortType);
+    var bv = getCellSortValue(b.cells[sortCol], sortType);
+    if (sortType === 'num') return st.asc ? av - bv : bv - av;
+    return st.asc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+
+  rows.forEach(function(row) { tbody.appendChild(row); });
+  renderPagination(tableId);
+}
+
+function getCellSortValue(cell, type) {
+  var text = cell.textContent.trim();
+  if (type === 'num') {
+    var num = parseFloat(text.replace(/[^0-9.\-]/g, ''));
+    return isNaN(num) ? 0 : num;
+  }
+  if (type === 'date') {
+    return new Date(text.replace(/\//g, '-')).getTime() || 0;
+  }
+  return text;
+}
+
+// ===== Export to Excel (CSV with BOM) =====
+function exportTable(tableId, filename) {
+  var table = document.getElementById(tableId);
+  var rows = table.querySelectorAll('tr');
+  var csv = [];
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var cells = row.querySelectorAll('th, td');
+    var rowData = [];
+    for (var j = 0; j < cells.length; j++) {
+      var cell = cells[j];
+      if (cell.querySelector('.progress-bar')) { rowData.push(''); continue; }
+      var text = cell.textContent.trim().replace(/"/g, '""');
+      rowData.push('"' + text + '"');
+    }
+    csv.push(rowData.join(','));
+  }
+
+  var csvContent = '\uFEFF' + csv.join('\n');
+  var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  link.download = (filename || tableId) + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// ===== Settlement & Overdue Table Search Filter =====
+function filterSettleTable() {
+  var keyword = (document.getElementById('settleSearchInput').value || '').toLowerCase();
+  var rows = document.querySelectorAll('#settleTable tbody tr');
+  rows.forEach(function(row) {
+    var name = (row.cells[0] ? row.cells[0].textContent : '').toLowerCase();
+    row.style.display = (!keyword || name.indexOf(keyword) > -1) ? '' : 'none';
+  });
+}
+
+function filterOverdueTable() {
+  var keyword = (document.getElementById('overdueSearchInput').value || '').toLowerCase();
+  var rows = document.querySelectorAll('#overdueTable tbody tr');
+  rows.forEach(function(row) {
+    var name = (row.cells[0] ? row.cells[0].textContent : '').toLowerCase();
+    row.style.display = (!keyword || name.indexOf(keyword) > -1) ? '' : 'none';
+  });
+}
+
+// ===== Init all tables =====
+try { renderTenantTable(); } catch(e) { console.error('renderTenantTable error:', e); }
+try { initProductSelects(); } catch(e) { console.error('initProductSelects error:', e); }
+try { renderProductTable(); } catch(e) { console.error('renderProductTable error:', e); }
+try { initPagination('orderTable', 5); } catch(e) { console.error('initPagination orderTable error:', e); }
+try { initPagination('settleTable', 5); } catch(e) { console.error('initPagination settleTable error:', e); }
+try { initPagination('overdueTable', 5); } catch(e) { console.error('initPagination overdueTable error:', e); }
+try { renderPSOptions(''); } catch(e) { console.error('renderPSOptions error:', e); }
+try { updateTurnoverChart(); } catch(e) { console.error('updateTurnoverChart error:', e); }
+
+// Init price analysis panel
+try { initPricePanel(); } catch(e) { console.error('initPricePanel error:', e); }
+</script>
+
+<!-- ===== Turnover Rules Modal ===== -->
+<div class="modal-overlay" id="turnoverModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">自定义动销率规则</span>
+      <button class="modal-close" onclick="closeTurnoverModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc">设置各分类的月销售量阈值，系统将根据阈值对商品进行动销状态分类，并更新统计图表。</div>
+      <div class="modal-rule-row">
+        <span class="tr-dot green"></span>
+        <span class="modal-rule-label">畅销品</span>
+        <span class="modal-rule-op">≥</span>
+        <input type="number" id="modalRuleBest" value="500" min="0" step="10">
+        <span class="modal-rule-unit">件</span>
+      </div>
+      <div class="modal-rule-row">
+        <span class="tr-dot blue"></span>
+        <span class="modal-rule-label">正常品</span>
+        <span class="modal-rule-op">≥</span>
+        <input type="number" id="modalRuleNormal" value="150" min="0" step="10">
+        <span class="modal-rule-unit">件</span>
+      </div>
+      <div class="modal-rule-row">
+        <span class="tr-dot amber"></span>
+        <span class="modal-rule-label">滞销预警</span>
+        <span class="modal-rule-op">≥</span>
+        <input type="number" id="modalRuleWarn" value="50" min="0" step="10">
+        <span class="modal-rule-unit">件</span>
+      </div>
+      <div class="modal-rule-row">
+        <span class="tr-dot red"></span>
+        <span class="modal-rule-label">滞销品</span>
+        <span class="modal-rule-op">&lt;</span>
+        <span class="modal-rule-val">预警值</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-reset" onclick="resetTurnoverRules()">恢复默认</button>
+      <button class="modal-btn-cancel" onclick="closeTurnoverModal()">取消</button>
+      <button class="modal-btn-apply" onclick="applyTurnoverRules()">应用</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
