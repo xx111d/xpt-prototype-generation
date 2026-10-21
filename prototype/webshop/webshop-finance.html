@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金融中心 - 星苹台商城</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* ===== 顶层开通状态 Tab ===== */
+.activation-tabs {
+  display: flex;
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 1rem;
+  gap: 0;
+}
+.activation-tab-btn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: none;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+  position: relative;
+  white-space: nowrap;
+}
+.activation-tab-btn:hover { color: hsl(var(--foreground)); }
+.activation-tab-btn.active {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+.activation-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+}
+.activation-panel { display: none; }
+.activation-panel.active { display: block; }
+
+/* 准入判定 */
+.access-check-card {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.access-check-card.access-pass {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4, #fff);
+}
+.access-check-card.access-fail {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2, #fff);
+}
+.access-check-card.access-warn {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb, #fff);
+}
+.access-check-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.625rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.access-check-status {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.access-check-status.pass { color: #10b981; }
+.access-check-status.fail { color: #ef4444; }
+.access-check-status.warn { color: #f59e0b; }
+.access-check-score {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+.access-check-info {
+  background: hsl(var(--secondary));
+  border-radius: var(--radius-sm);
+  padding: 0.625rem;
+  margin-top: 0.375rem;
+}
+.access-check-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+.access-check-row .label { color: hsl(var(--muted-foreground)); }
+.access-check-row .val { font-weight: 600; }
+.access-check-fail-list {
+  margin-bottom: 0.625rem;
+}
+.fail-item {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.375rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 0.8125rem;
+}
+.fail-item:last-child { border-bottom: none; }
+.fail-icon { color: #ef4444; font-weight: 700; }
+.fail-detail {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.125rem;
+}
+.access-check-tips {
+  background: rgba(244, 63, 94, 0.05);
+  border-left: 3px solid #f43f5e;
+  padding: 0.625rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-top: 0.375rem;
+}
+.tips-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: #f43f5e;
+}
+.access-check-tips ul {
+  margin: 0;
+  padding-left: 1.125rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+.access-check-supplement {
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.625rem;
+  margin-top: 0.375rem;
+}
+.supplement-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+  margin-bottom: 0.375rem;
+  color: #f59e0b;
+}
+.supplement-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0;
+  font-size: 0.75rem;
+}
+.supplement-item input[type="checkbox"] {
+  accent-color: hsl(var(--primary));
+}
+
+/* 申请提交成功 */
+.apply-result {
+  text-align: center;
+  padding: 2rem 1.25rem;
+}
+.apply-result-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  background: hsl(var(--success-muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+.apply-result h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.375rem;
+}
+.apply-result p {
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.1875rem;
+  line-height: 1.5;
+}
+.apply-result .result-info {
+  display: inline-block;
+  margin-top: 0.625rem;
+  padding: 0.625rem 1rem;
+  background: hsl(var(--secondary));
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  text-align: left;
+  line-height: 1.7;
+}
+
+/* 订单融资介绍 */
+.credit-intro {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.credit-intro-banner {
+  background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+  padding: 1.25rem 1.5rem;
+  color: #fff;
+}
+.credit-intro-banner h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.credit-intro-banner .intro-subtitle {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.5;
+}
+.credit-intro-body {
+  padding: 1.25rem 1.5rem;
+}
+.credit-intro-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.credit-intro-feature {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+}
+.credit-intro-feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: hsl(var(--primary-muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.credit-intro-feature-text h4 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.125rem;
+}
+.credit-intro-feature-text p {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.45;
+}
+.credit-intro-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 0.75rem;
+  color: hsl(var(--foreground));
+  flex-wrap: nowrap;
+}
+.credit-intro-flow .flow-step {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem 0.375rem;
+  background: hsl(var(--secondary));
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.credit-intro-flow .flow-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.credit-intro-flow .flow-step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.credit-intro-flow .flow-arrow {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-weight: 700;
+  font-size: 0.6875rem;
+}
+@media (max-width: 768px) {
+  .credit-intro-features { grid-template-columns: 1fr; }
+  .credit-intro-flow { flex-wrap: wrap; }
+  .credit-intro-flow .flow-arrow { display: none; }
+  .credit-intro-flow .flow-step { flex: none; width: 100%; border-radius: var(--radius-sm) !important; margin-bottom: 0.375rem; }
+}
+
+/* Modal 详情网格 */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+  padding: 0.5rem 0.625rem;
+  background: hsl(var(--secondary));
+  border-radius: var(--radius-sm);
+}
+.detail-item .detail-label {
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+}
+.detail-item .detail-value {
+  font-size: 0.8125rem;
+  color: hsl(var(--foreground));
+}
+
+/* ===== 金融中心 Header Banner ===== */
+.finance-header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: #fff;
+}
+.finance-header-left h1 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.125rem;
+}
+.finance-header-left .subtitle {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+}
+.finance-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.finance-header-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.75rem;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.25);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: #4ade80;
+  white-space: nowrap;
+}
+.finance-header-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ===== 指标卡片行 ===== */
+.finance-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.finance-metric-card {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  transition: box-shadow var(--transition-fast);
+}
+.finance-metric-card:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.finance-metric-card.primary { border-left: 3px solid hsl(var(--primary)); }
+.finance-metric-card.warning { border-left: 3px solid hsl(var(--warning)); }
+.finance-metric-card.success { border-left: 3px solid hsl(var(--success)); }
+.finance-metric-card.info    { border-left: 3px solid #3b82f6; }
+.finance-metric-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+.finance-metric-icon.primary-bg { background: hsl(var(--primary-muted)); }
+.finance-metric-icon.warning-bg { background: hsl(var(--warning-muted)); }
+.finance-metric-icon.success-bg { background: hsl(var(--success-muted)); }
+.finance-metric-icon.info-bg    { background: hsl(220 70% 95%); }
+.finance-metric-label {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+}
+.finance-metric-value {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  line-height: 1.2;
+}
+.finance-metric-value.primary-color { color: hsl(var(--primary)); }
+.finance-metric-value.warning-color { color: hsl(var(--warning)); }
+.finance-metric-value.success-color { color: hsl(var(--success)); }
+.finance-metric-value.info-color    { color: #3b82f6; }
+.finance-metric-sub {
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.125rem;
+}
+
+/* ===== 额度使用详情区 ===== */
+.credit-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.credit-detail-card {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.credit-detail-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.75rem;
+}
+
+/* 融资信息卡片 */
+.credit-term-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem 1rem;
+}
+.credit-term-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0;
+  font-size: 0.8125rem;
+}
+.credit-term-row .label { color: hsl(var(--muted-foreground)); }
+.credit-term-row .val { font-weight: 600; color: hsl(var(--foreground)); }
+.credit-term-row .val.warn { color: hsl(var(--warning)); }
+.credit-term-row .val.good { color: hsl(var(--success)); }
+
+/* 服务说明 */
+.service-intro {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.service-intro h3 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.625rem;
+}
+.service-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.service-intro-item {
+  display: flex;
+  gap: 0.625rem;
+}
+.service-intro-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: hsl(var(--primary-muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.service-intro-text h4 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.125rem;
+}
+.service-intro-text p {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.45;
+}
+
+/* ===== Tabs ===== */
+.finance-tabs {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.finance-tab-header {
+  display: flex;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--secondary));
+}
+.finance-tab-btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border: none;
+  background: none;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+  position: relative;
+  white-space: nowrap;
+}
+.finance-tab-btn:hover { color: hsl(var(--foreground)); }
+.finance-tab-btn.active {
+  color: hsl(var(--primary));
+  font-weight: 600;
+  background: #fff;
+}
+.finance-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+}
+.finance-tab-btn .tab-count {
+  display: inline-block;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 0.3125rem;
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  margin-left: 0.25rem;
+}
+.finance-tab-btn .tab-count.warn { background: hsl(var(--warning-muted)); color: hsl(var(--warning)); }
+.finance-tab-body { padding: 0; }
+.finance-tab-panel { display: none; }
+.finance-tab-panel.active { display: block; }
+
+/* 表格工具栏 */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  flex-wrap: wrap;
+}
+.table-toolbar select {
+  padding: 0.3125rem 0.5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  outline: none;
+  background: #fff;
+  color: hsl(var(--foreground));
+  font-family: inherit;
+}
+
+/* 金融表格 */
+.finance-table-wrap { overflow-x: auto; }
+.finance-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.finance-table thead th {
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--secondary));
+  border-bottom: 1px solid hsl(var(--border));
+  white-space: nowrap;
+}
+.finance-table tbody td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  vertical-align: middle;
+}
+.finance-table tbody tr:hover td { background: rgba(0,0,0,0.01); }
+.finance-table tbody tr:last-child td { border-bottom: none; }
+.finance-table .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+.finance-table .amount.primary { color: hsl(var(--primary)); }
+.finance-table .amount.danger { color: hsl(var(--destructive)); }
+.finance-table .link { color: hsl(var(--primary)); cursor: pointer; text-decoration: none; }
+.finance-table .link:hover { text-decoration: underline; }
+.finance-table .cell-actions { display: flex; gap: 0.25rem; }
+
+/* 账单状态标签 */
+.bill-status {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.bill-status.pending { background: hsl(var(--warning-muted)); color: hsl(var(--warning)); }
+.bill-status.paid    { background: hsl(var(--success-muted)); color: hsl(var(--success)); }
+.bill-status.overdue { background: hsl(var(--destructive-muted)); color: hsl(var(--destructive)); }
+
+/* 分页 */
+.finance-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  border-top: 1px solid hsl(var(--border));
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.finance-pagination .pagination-info { color: hsl(var(--muted-foreground)); }
+.finance-pagination .pagination-controls { display: flex; gap: 0.1875rem; }
+.finance-pagination .pagination-controls button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 0.375rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+.finance-pagination .pagination-controls button:hover { border-color: hsl(var(--primary)); }
+.finance-pagination .pagination-controls button.active { background: hsl(var(--primary)); color: #fff; border-color: hsl(var(--primary)); }
+.finance-pagination .pagination-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== 额度申请表单区 ===== */
+.apply-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1rem;
+}
+.apply-form-card {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+.apply-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.apply-sidebar-card {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.apply-sidebar-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.625rem;
+}
+
+/* 申请步骤 */
+.apply-steps {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.apply-step {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+.apply-step .step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.apply-step.active .step-num { background: hsl(var(--primary)); color: #fff; }
+.apply-step.active { color: hsl(var(--foreground)); font-weight: 600; }
+.apply-step.done .step-num { background: hsl(var(--success)); color: #fff; }
+.apply-step.done { color: hsl(var(--success)); }
+.apply-step-line { flex: 1; height: 1px; background: hsl(var(--border)); margin: 0 0.5rem; min-width: 20px; }
+.apply-step-line.done { background: hsl(var(--success)); }
+
+/* 表单 */
+.form-group { margin-bottom: 0.875rem; }
+.form-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.25rem;
+}
+.form-group label .required { color: hsl(var(--destructive)); margin-left: 0.125rem; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.4375rem 0.625rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  outline: none;
+  font-family: inherit;
+  background: #fff;
+  color: hsl(var(--foreground));
+  transition: border-color var(--transition-fast);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: hsl(var(--ring)); }
+.form-group textarea { resize: vertical; min-height: 72px; }
+.form-hint { font-size: 0.6875rem; color: hsl(var(--muted-foreground)); margin-top: 0.1875rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* 协议勾选 - 左对齐 */
+.agreement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.agreement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: hsl(var(--foreground));
+}
+.agreement-item input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin-top: 0.125rem;
+  accent-color: hsl(var(--primary));
+  flex-shrink: 0;
+}
+.agreement-item label { margin-bottom: 0; font-weight: 400; }
+.agreement-item a { color: hsl(var(--primary)); text-decoration: none; }
+.agreement-item a:hover { text-decoration: underline; }
+
+/* 上传区 */
+.upload-zone {
+  border: 1.5px dashed hsl(var(--border));
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+}
+.upload-zone:hover { border-color: hsl(var(--primary)); color: hsl(var(--primary)); background: rgba(244,63,94,0.05); }
+
+/* 提示侧边栏 */
+.apply-tip-list { list-style: none; }
+.apply-tip-list li {
+  padding: 0.3125rem 0;
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3125rem;
+}
+.apply-tip-list li::before {
+  content: '•';
+  color: hsl(var(--primary));
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.apply-tip-list li.warn::before { color: hsl(var(--warning)); }
+
+/* 费用说明 */
+.fee-explain {
+  padding: 0.625rem;
+  background: hsl(var(--secondary));
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.55;
+}
+.fee-explain strong { color: hsl(var(--foreground)); }
+
+/* 费用试算 */
+.cost-calc { margin-top: 0.5rem; }
+.cost-calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  font-size: 0.6875rem;
+  border-bottom: 1px dashed hsl(var(--border));
+}
+.cost-calc-row:last-child { border-bottom: none; }
+.cost-calc-label { color: hsl(var(--muted-foreground)); }
+.cost-calc-val { font-weight: 600; color: hsl(var(--foreground)); }
+.cost-calc-total { font-size: 0.8125rem; color: #f43f5e; font-weight: 700; }
+.cost-calc-party { font-size: 0.625rem; color: hsl(var(--muted-foreground)); margin-left: 0.375rem; font-weight: 400; }
+.cost-calc-rate { font-size: 0.625rem; color: hsl(var(--muted-foreground)); margin-top: 0.25rem; line-height: 1.4; }
+
+/* 综合融资成本明示表 */
+.compliance-table { margin-bottom: 0.75rem; }
+.compliance-row {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.75rem;
+  border-bottom: 1px dashed hsl(var(--border));
+  gap: 0.5rem;
+}
+.compliance-label { color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.compliance-val { font-weight: 600; color: hsl(var(--foreground)); }
+.compliance-note { font-size: 0.625rem; color: hsl(var(--muted-foreground)); }
+.compliance-countdown {
+  text-align: center;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  padding: 0.5rem;
+  background: hsl(var(--warning) / 0.08);
+  border-radius: var(--radius-sm);
+}
+.compliance-countdown strong { color: hsl(var(--warning)); }
+
+/* 融资进度 */
+.finance-progress { margin-top: 0.5rem; }
+.finance-progress-bar {
+  height: 4px;
+  background: hsl(var(--muted));
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.375rem;
+}
+.finance-progress-fill {
+  height: 100%;
+  background: hsl(var(--warning));
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.finance-progress-text {
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+  display: flex;
+  justify-content: space-between;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: hsl(var(--muted-foreground));
+}
+.empty-state .empty-icon { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.4; }
+.empty-state .empty-text { font-size: 0.8125rem; margin-bottom: 0.375rem; }
+.empty-state .empty-sub { font-size: 0.75rem; }
+
+/* 还款Modal */
+.repay-bill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.375rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.repay-bill-item:hover { border-color: rgba(244,63,94,0.5); }
+.repay-bill-item input[type="checkbox"] { margin-top: 0.125rem; accent-color: hsl(var(--primary)); flex-shrink: 0; }
+.repay-bill-info { flex: 1; }
+.repay-bill-no { font-size: 0.6875rem; color: hsl(var(--muted-foreground)); }
+.repay-bill-amount { font-size: 0.875rem; font-weight: 600; color: hsl(var(--foreground)); }
+.repay-bill-due { font-size: 0.6875rem; color: hsl(var(--warning)); }
+.repay-bill-due.overdue { color: hsl(var(--destructive)); }
+.repay-summary {
+  padding: 0.625rem;
+  background: hsl(var(--secondary));
+  border-radius: var(--radius-sm);
+  margin-top: 0.625rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.repay-total { font-size: 1rem; font-weight: 700; color: hsl(var(--primary)); }
+
+/* 服务说明卡片 */
+.service-intro {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.service-intro h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.75rem;
+}
+.service-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.service-intro-item {
+  display: flex;
+  gap: 0.75rem;
+}
+.service-intro-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: hsl(var(--primary-muted));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+.service-intro-text h4 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.125rem;
+}
+.service-intro-text p {
+  font-size: var(--text-xs);
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .finance-metrics { grid-template-columns: repeat(2, 1fr); }
+  .credit-detail-section { grid-template-columns: 1fr; }
+  .apply-layout { grid-template-columns: 1fr; }
+  .service-intro-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .finance-tab-btn { padding: 0.5rem 0.625rem; font-size: 0.75rem; }
+  .apply-steps { flex-direction: column; align-items: flex-start; gap: 0.375rem; }
+  .apply-step-line { display: none; }
+  .finance-header { flex-direction: column; align-items: flex-start; }
+  .credit-intro-features { grid-template-columns: 1fr; }
+  .credit-intro-flow { flex-wrap: wrap; }
+  .credit-intro-flow .flow-arrow { display: none; }
+  .credit-intro-flow .flow-step { flex: none; width: 100%; border-radius: var(--radius-sm) !important; margin-bottom: 0.25rem; }
+  .credit-term-info { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<script>var WEBSHOP_PAGE = 'finance';</script>
+<div id="header-container"></div>
+<div id="nav-bar-container"></div>
+<div class="main">
+  <div class="personal-layout">
+    <div id="personal-sidebar-container"></div>
+    <div class="personal-content">
+
+      <!-- 顶层开通状态 Tab -->
+      <div class="activation-tabs">
+        <button class="activation-tab-btn" data-activation="unactivated" onclick="switchActivation('unactivated')">未开通</button>
+        <button class="activation-tab-btn active" data-activation="activated" onclick="switchActivation('activated')">已开通</button>
+      </div>
+
+      <!-- 已开通面板 -->
+      <div class="activation-panel active" id="activation-activated">
+
+      <!-- Header Banner -->
+      <div class="finance-header">
+        <div class="finance-header-left">
+          <h1>金融中心</h1>
+          <div class="subtitle">订单融资 · 基于项目订单 · 按订单周期定制账期</div>
+        </div>
+        <div class="finance-header-right">
+          <div class="finance-header-status" style="margin-right:0.75rem;">
+            <span class="finance-header-dot"></span> 额度正常
+          </div>
+          <button class="finance-header-status" style="background:rgba(245,159,10,0.15);border-color:rgba(245,159,10,0.3);color:#f59f0a;cursor:pointer;font-family:inherit;" onclick="openApplyModal()">申请提额</button>
+        </div>
+      </div>
+
+      <!-- 融资信息 -->
+      <div class="credit-detail-section" style="margin-bottom:1.25rem;">
+        <div class="credit-detail-card">
+          <div class="credit-detail-title">融资信息</div>
+          <div class="credit-term-info">
+            <div class="credit-term-row">
+              <span class="label">总额度</span><span class="val">¥700,000.00</span>
+            </div>
+            <div class="credit-term-row">
+              <span class="label">账期逻辑</span><span class="val good">按订单周期定制</span>
+            </div>
+            <div class="credit-term-row">
+              <span class="label">服务费率</span><span class="val">0.5%</span>
+            </div>
+            <div class="credit-term-row">
+              <span class="label">逾期罚息</span><span class="val">0.05%/天</span>
+            </div>
+            <div class="credit-term-row">
+              <span class="label">最近还款日</span><span class="val warn">2026-08-19</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 四大指标卡片 -->
+      <div class="finance-metrics">
+        <div class="finance-metric-card primary">
+          <div class="finance-metric-header">
+            <div class="finance-metric-icon primary-bg">💰</div>
+          </div>
+          <div class="finance-metric-label">总额度</div>
+          <div class="finance-metric-value primary-color">¥700,000</div>
+          <div class="finance-metric-sub">3个项目订单</div>
+        </div>
+        <div class="finance-metric-card warning">
+          <div class="finance-metric-header">
+            <div class="finance-metric-icon warning-bg">📋</div>
+          </div>
+          <div class="finance-metric-label">已用额度</div>
+          <div class="finance-metric-value warning-color">¥320,000</div>
+          <div class="finance-metric-sub">待还款 ¥320,000</div>
+        </div>
+        <div class="finance-metric-card success">
+          <div class="finance-metric-header">
+            <div class="finance-metric-icon success-bg">📅</div>
+          </div>
+          <div class="finance-metric-label">可用额度</div>
+          <div class="finance-metric-value success-color">¥380,000</div>
+          <div class="finance-metric-sub">2笔融资可用</div>
+        </div>
+        <div class="finance-metric-card info">
+          <div class="finance-metric-header">
+            <div class="finance-metric-icon info-bg">📊</div>
+          </div>
+          <div class="finance-metric-label">累计融资</div>
+          <div class="finance-metric-value info-color">¥525,000</div>
+          <div class="finance-metric-sub">已还款 ¥205,000</div>
+        </div>
+      </div>
+
+      <!-- Tab 区域 -->
+      <div class="finance-tabs">
+        <div class="finance-tab-header">
+          <button class="finance-tab-btn active" data-tab="my-finance" onclick="switchTab('my-finance')">
+            我的融资
+          </button>
+          <button class="finance-tab-btn" data-tab="bills" onclick="switchTab('bills')">
+            账单管理<span class="tab-count warn">3</span>
+          </button>
+          <button class="finance-tab-btn" data-tab="records" onclick="switchTab('records')">
+            还款记录
+          </button>
+        </div>
+        <div class="finance-tab-body">
+
+          <!-- 我的融资 -->
+          <div class="finance-tab-panel active" id="tab-my-finance">
+            <div class="table-toolbar">
+              <span style="font-size:var(--text-xs);color:hsl(var(--muted-foreground));">融资状态</span>
+              <select id="finance-status-filter" onchange="filterFinanceStatus()">
+                <option value="all">全部</option>
+                <option value="待生效">待生效</option>
+                <option value="已驳回">已驳回</option>
+                <option value="生效中">生效中</option>
+                <option value="已过期">已过期</option>
+              </select>
+              <span style="font-size:var(--text-xs);color:hsl(var(--muted-foreground));margin-left:1rem;">项目来源</span>
+              <select id="finance-source-filter" onchange="filterFinanceStatus()">
+                <option value="all">全部</option>
+                <option value="国家电网">国家电网</option>
+                <option value="军网">军网</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="margin-bottom:0;">
+                <thead>
+                  <tr>
+                    <th>融资编号</th>
+                    <th>项目来源</th>
+                    <th>项目单号</th>
+                    <th>申请时间</th>
+                    <th>订单金额</th>
+                    <th>融资额度</th>
+                    <th>已用</th>
+                    <th>剩余</th>
+                    <th>使用率</th>
+                    <th>到期日</th>
+                    <th>融资状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="link">FNC-2026-001</span></td>
+                    <td>国家电网</td>
+                    <td><span class="link" onclick="alert('国网项目A - 办公设备采购\n订单金额：500,000\n融资比例：70%\n融资额度：350,000')">GW-2026-0723-A</span></td>
+                    <td>2026-07-23</td>
+                    <td class="num">¥500,000</td>
+                    <td class="num">¥350,000</td>
+                    <td class="num">¥200,000</td>
+                    <td class="num">¥150,000</td>
+                    <td class="num"><div style="display:flex;align-items:center;gap:0.5rem;"><div style="flex:1;height:6px;background:hsl(var(--muted));border-radius:3px;overflow:hidden;"><div style="width:57%;height:100%;background:hsl(var(--warning));border-radius:3px;"></div></div>57%</div></td>
+                    <td>2026-10-15</td>
+                    <td><span class="bill-status paid">生效中</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openFinanceDetail('FNC-2026-001')">详情</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="link">FNC-2026-002</span></td>
+                    <td>国家电网</td>
+                    <td><span class="link" onclick="alert('国网项目B - 打印耗材采购\n订单金额：300,000\n融资比例：70%\n融资额度：210,000')">GW-2026-0615-B</span></td>
+                    <td>2026-06-15</td>
+                    <td class="num">¥300,000</td>
+                    <td class="num">¥210,000</td>
+                    <td class="num">¥120,000</td>
+                    <td class="num">¥90,000</td>
+                    <td class="num"><div style="display:flex;align-items:center;gap:0.5rem;"><div style="flex:1;height:6px;background:hsl(var(--muted));border-radius:3px;overflow:hidden;"><div style="width:57%;height:100%;background:hsl(var(--warning));border-radius:3px;"></div></div>57%</div></td>
+                    <td>2026-09-30</td>
+                    <td><span class="bill-status pending">待生效</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openFinanceDetail('FNC-2026-002')">详情</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="link">FNC-2026-003</span></td>
+                    <td>军网</td>
+                    <td><span class="link" onclick="alert('军网项目C - 电脑配件采购\n订单金额：200,000\n融资比例：70%\n融资额度：140,000')">JW-2026-0520-C</span></td>
+                    <td>2026-05-20</td>
+                    <td class="num">¥200,000</td>
+                    <td class="num">¥140,000</td>
+                    <td class="num">¥0</td>
+                    <td class="num">¥140,000</td>
+                    <td class="num"><div style="display:flex;align-items:center;gap:0.5rem;"><div style="flex:1;height:6px;background:hsl(var(--muted));border-radius:3px;overflow:hidden;"><div style="width:0%;height:100%;background:hsl(var(--success));border-radius:3px;"></div></div>0%</div></td>
+                    <td>2026-11-05</td>
+                    <td><span class="bill-status overdue">已过期</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openFinanceDetail('FNC-2026-003')">详情</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="link">FNC-2026-004</span></td>
+                    <td>军网</td>
+                    <td><span class="link" onclick="alert('军网项目E - 安防设备采购\n订单金额：150,000\n融资比例：70%\n融资额度：105,000')">JW-2026-0801-E</span></td>
+                    <td>2026-08-01</td>
+                    <td class="num">¥150,000</td>
+                    <td class="num">¥105,000</td>
+                    <td class="num">¥0</td>
+                    <td class="num">¥105,000</td>
+                    <td class="num"><div style="display:flex;align-items:center;gap:0.5rem;"><div style="flex:1;height:6px;background:hsl(var(--muted));border-radius:3px;overflow:hidden;"><div style="width:0%;height:100%;background:hsl(var(--muted-foreground));border-radius:3px;"></div></div>0%</div></td>
+                    <td>-</td>
+                    <td><span class="bill-status" style="background:hsl(var(--destructive));color:#fff;">已驳回</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openFinanceDetail('FNC-2026-004')">详情</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="finance-pagination">
+              <div class="pagination-info">共 4 条记录</div>
+              <div class="pagination-controls">
+                <button disabled>上一页</button>
+                <button class="active">1</button>
+                <button disabled>下一页</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 账单管理 -->
+          <div class="finance-tab-panel" id="tab-bills">
+            <div class="table-toolbar">
+              <span style="font-size:var(--text-xs);color:hsl(var(--muted-foreground));">状态</span>
+              <select id="bill-status-filter" onchange="filterBills()">
+                <option value="all">全部账单</option>
+                <option value="pending">待还款</option>
+                <option value="paid">已还款</option>
+                <option value="overdue">已逾期</option>
+              </select>
+              <span style="font-size:var(--text-xs);color:hsl(var(--muted-foreground));">时间</span>
+              <select><option>最近3个月</option><option>最近6个月</option><option>最近1年</option></select>
+              <div class="toolbar-right">
+                <button class="btn btn-primary btn-sm" onclick="openRepayModal()">批量还款</button>
+              </div>
+            </div>
+            <div class="finance-table-wrap">
+              <table class="finance-table">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" onchange="toggleAllBills(this)" title="全选"></th>
+                    <th>账单编号</th>
+                    <th>关联融资</th>
+                    <th>关联订单</th>
+                    <th>账单金额</th>
+                    <th>待还金额</th>
+                    <th>到期日</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="bill-list">
+                  <tr>
+                    <td><input type="checkbox" class="bill-checkbox" data-bill="BL-20260805-0012" data-amount="128640"></td>
+                    <td><span class="link" onclick="openBillDetail('BL-20260805-0012')">BL-20260805-0012</span></td>
+                    <td><span class="link">FNC-2026-001</span></td>
+                    <td>PO-20260805-0038</td>
+                    <td class="amount">¥128,640.00</td>
+                    <td class="amount primary">¥128,640.00</td>
+                    <td>2026-10-05</td>
+                    <td><span class="bill-status pending">待还款</span></td>
+                    <td class="cell-actions">
+                      <button class="btn btn-outline btn-xs" onclick="openBillDetail('BL-20260805-0012')">详情</button>
+                      <button class="btn btn-primary btn-xs" onclick="repaySingle('BL-20260805-0012')">还款</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" class="bill-checkbox" data-bill="BL-20260720-0008" data-amount="56000"></td>
+                    <td><span class="link" onclick="openBillDetail('BL-20260720-0008')">BL-20260720-0008</span></td>
+                    <td><span class="link">FNC-2026-001</span></td>
+                    <td>PO-20260720-0015</td>
+                    <td class="amount">¥56,000.00</td>
+                    <td class="amount primary">¥56,000.00</td>
+                    <td style="color:hsl(var(--warning));font-weight:500;">2026-08-19</td>
+                    <td><span class="bill-status pending">待还款</span></td>
+                    <td class="cell-actions">
+                      <button class="btn btn-outline btn-xs" onclick="openBillDetail('BL-20260720-0008')">详情</button>
+                      <button class="btn btn-primary btn-xs" onclick="repaySingle('BL-20260720-0008')">还款</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" class="bill-checkbox" data-bill="BL-20260715-0010" data-amount="85000" disabled></td>
+                    <td><span class="link" onclick="openBillDetail('BL-20260715-0010')">BL-20260715-0010</span></td>
+                    <td><span class="link">FNC-2026-002</span></td>
+                    <td>PO-20260715-0021</td>
+                    <td class="amount">¥85,000.00</td>
+                    <td class="amount">¥0.00</td>
+                    <td>2026-08-14</td>
+                    <td><span class="bill-status paid">已还款</span></td>
+                    <td class="cell-actions">
+                      <button class="btn btn-outline btn-xs" onclick="openBillDetail('BL-20260715-0010')">详情</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" class="bill-checkbox" data-bill="BL-20260610-0005" data-amount="42777"></td>
+                    <td><span class="link" onclick="openBillDetail('BL-20260610-0005')">BL-20260610-0005</span></td>
+                    <td><span class="link">FNC-2026-002</span></td>
+                    <td>PO-20260610-0012</td>
+                    <td class="amount">¥42,000.00</td>
+                    <td class="amount danger">¥42,777.00</td>
+                    <td style="color:hsl(var(--destructive));font-weight:500;">2026-07-10</td>
+                    <td><span class="bill-status overdue">已逾期27天</span></td>
+                    <td class="cell-actions">
+                      <button class="btn btn-outline btn-xs" onclick="openBillDetail('BL-20260610-0005')">详情</button>
+                      <button class="btn btn-primary btn-xs" onclick="repaySingle('BL-20260610-0005')">还款</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="finance-pagination">
+              <div class="pagination-info">共 4 条记录，待还 3 笔</div>
+              <div class="pagination-controls">
+                <button disabled>上一页</button>
+                <button class="active">1</button>
+                <button disabled>下一页</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 还款记录 -->
+          <div class="finance-tab-panel" id="tab-records">
+            <div class="table-toolbar">
+              <span style="font-size:var(--text-xs);color:hsl(var(--muted-foreground));">时间</span>
+              <select><option>最近3个月</option><option>最近6个月</option><option>最近1年</option></select>
+            </div>
+            <div class="finance-table-wrap">
+              <table class="finance-table">
+                <thead>
+                  <tr>
+                    <th>还款单号</th>
+                    <th>还款金额</th>
+                    <th>关联账单</th>
+                    <th>还款方式</th>
+                    <th>还款时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="link">RP-20260810-0001</span></td>
+                    <td class="amount">¥85,000.00</td>
+                    <td>BL-20260715-0010</td>
+                    <td>结算还款</td>
+                    <td>2026-08-10 09:30</td>
+                    <td><span class="badge badge-success">已到账</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openVoucherDetail('RP-20260810-0001')">查看凭证</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="link">RP-20260725-0002</span></td>
+                    <td class="amount">¥120,000.00</td>
+                    <td>BL-20260701-0003</td>
+                    <td>结算还款</td>
+                    <td>2026-07-25 14:15</td>
+                    <td><span class="badge badge-success">已到账</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openVoucherDetail('RP-20260725-0002')">查看凭证</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="link">RP-20260819-0003</span></td>
+                    <td class="amount">¥56,000.00</td>
+                    <td>BL-20260720-0008</td>
+                    <td>手动还款</td>
+                    <td>2026-08-19 16:22</td>
+                    <td><span class="badge badge-success">已到账</span></td>
+                    <td><button class="btn btn-outline btn-xs" onclick="openVoucherDetail('RP-20260819-0003')">查看凭证</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="finance-pagination">
+              <div class="pagination-info">共 3 条记录</div>
+              <div class="pagination-controls">
+                <button disabled>上一页</button>
+                <button class="active">1</button>
+                <button disabled>下一页</button>
+              </div>
+            </div>
+          </div>
+
+          </div>
+      </div>
+
+      </div><!-- /activation-activated -->
+
+      <!-- 未开通面板：额度申请 -->
+      <div class="activation-panel" id="activation-unactivated">
+        <!-- 订单融资介绍 -->
+        <div class="credit-intro">
+          <div class="credit-intro-banner">
+            <h2>订单融资 - 基于项目订单的采购融资服务</h2>
+            <div class="intro-subtitle">订单融资是星苹台为优质供应商提供的采购融资产品，基于已承接的中台项目订单，为企业提供"先采购后付款"的融资支持，按订单周期定制账期，回款自动划扣还款。</div>
+          </div>
+          <div class="credit-intro-body">
+            <div class="credit-intro-rate" style="display:flex;align-items:stretch;gap:0;background:#fff;border:1px solid hsl(var(--border));border-radius:var(--radius);margin-bottom:1rem;overflow:hidden;flex-wrap:wrap;">
+              <div style="flex:1;min-width:180px;padding:1rem 1.25rem;text-align:center;border-right:1px solid hsl(var(--border));">
+                <div style="font-size:0.75rem;color:hsl(var(--muted-foreground));margin-bottom:0.375rem;">年化利率</div>
+                <div>
+                  <span style="font-size:1.5rem;font-weight:700;color:#f43f5e;line-height:1;">6.0%</span>
+                  <span style="font-size:0.75rem;color:hsl(var(--muted-foreground));">起</span>
+                </div>
+              </div>
+              <div style="flex:1;min-width:180px;padding:1rem 1.25rem;text-align:center;border-right:1px solid hsl(var(--border));">
+                <div style="font-size:0.75rem;color:hsl(var(--muted-foreground));margin-bottom:0.375rem;">平台服务费率</div>
+                <div>
+                  <span style="font-size:1.5rem;font-weight:700;color:#f43f5e;line-height:1;">0.3%</span>
+                  <span style="font-size:0.75rem;color:hsl(var(--muted-foreground));">-0.5%</span>
+                </div>
+              </div>
+              <div style="flex:2;min-width:260px;padding:0.75rem 1.25rem;display:flex;align-items:center;font-size:0.75rem;color:hsl(var(--muted-foreground));line-height:1.5;">
+                年化利率根据订单金额、融资期限及信用等级差异化定价；平台服务费按融资订单金额阶梯收取
+              </div>
+            </div>
+            <div class="service-intro" style="margin-bottom:1rem;">
+              <div class="service-intro-grid">
+                <div class="service-intro-item">
+                  <div class="service-intro-icon">🏦</div>
+                  <div class="service-intro-text">
+                    <h4>如何开通</h4>
+                    <p>提交企业资料并选择融资项目订单，平台前置筛选后直推银行自动审批</p>
+                  </div>
+                </div>
+                <div class="service-intro-item">
+                  <div class="service-intro-icon">💳</div>
+                  <div class="service-intro-text">
+                    <h4>如何使用</h4>
+                    <p>下单时选择"垫资下单"支付，系统自动匹配可用融资额度，按订单约定周期还款</p>
+                  </div>
+                </div>
+                <div class="service-intro-item">
+                  <div class="service-intro-icon">🔄</div>
+                  <div class="service-intro-text">
+                    <h4>还款方式</h4>
+                    <p>项目回款进入监管专户，银行自动划扣融资本息，剩余释放给供应商</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="credit-intro-flow">
+              <span class="flow-step">1. 选择项目订单</span><span class="flow-arrow">→</span>
+              <span class="flow-step">2. 提交融资申请</span><span class="flow-arrow">→</span>
+              <span class="flow-step">3. 银行自动审批</span><span class="flow-arrow">→</span>
+              <span class="flow-step">4. 受托支付放款</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 申请步骤 -->
+        <div class="apply-steps" id="unactivated-steps" style="margin-bottom:1rem;">
+          <div class="apply-step active"><span class="step-num">1</span>评估门槛</div>
+          <div class="apply-step-line"></div>
+          <div class="apply-step"><span class="step-num">2</span>填写申请</div>
+          <div class="apply-step-line"></div>
+          <div class="apply-step"><span class="step-num">3</span>银行审核</div>
+          <div class="apply-step-line"></div>
+          <div class="apply-step"><span class="step-num">4</span>查看结果</div>
+        </div>
+
+        <!-- 准入门槛介绍 -->
+        <div id="threshold-intro" class="credit-intro" style="margin-bottom:1rem;">
+          <div class="credit-intro-body" style="padding:1rem 1.25rem;">
+            <h3 style="font-size:0.875rem;font-weight:600;margin-bottom:0.75rem;color:hsl(var(--foreground));">融资申请准入门槛</h3>
+            <p style="font-size:0.75rem;color:hsl(var(--muted-foreground));margin-bottom:0.75rem;">系统将根据以下条件自动评估贵司是否具备融资申请资格（硬性条件，不通过则不可申请）：</p>
+            <table class="finance-table" style="margin-bottom:0;">
+              <thead>
+                <tr>
+                  <th>判定项</th>
+                  <th>通过条件</th>
+                  <th>不通过时提示</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>企业注册时间</strong></td>
+                  <td>入驻平台经营≥12个月</td>
+                  <td style="color:hsl(var(--destructive));">贵司入驻平台未满12个月，暂不符合融资申请条件</td>
+                </tr>
+                <tr>
+                  <td><strong>历史交易记录</strong></td>
+                  <td>有至少3笔已完成的中台项目订单</td>
+                  <td style="color:hsl(var(--destructive));">贵司暂无足够的历史交易记录，暂不符合融资申请条件</td>
+                </tr>
+                <tr>
+                  <td><strong>最新订单时间</strong></td>
+                  <td>最近一笔中台项目订单在90天内</td>
+                  <td style="color:hsl(var(--destructive));">贵司近90天内无新承接的中台项目，暂不符合融资申请条件</td>
+                </tr>
+                <tr>
+                  <td><strong>企业认证状态</strong></td>
+                  <td>已完成企业认证</td>
+                  <td style="color:hsl(var(--destructive));">贵司尚未完成企业认证，请先完成认证后再申请</td>
+                </tr>
+                <tr>
+                  <td><strong>企业征信</strong></td>
+                  <td>无重大负面记录</td>
+                  <td style="color:hsl(var(--destructive));">贵司存在负面征信记录，暂不符合融资申请条件</td>
+                </tr>
+                <tr>
+                  <td><strong>企业状态</strong></td>
+                  <td>存续/在营，未被列入经营异常名录</td>
+                  <td style="color:hsl(var(--destructive));">贵司经营状态异常，暂不符合融资申请条件</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="text-align:center;margin-top:1rem;">
+              <button class="btn btn-primary" onclick="runAccessCheck()" style="min-width:160px;display:inline-flex;align-items:center;justify-content:center;">在线评估</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 准入判定结果 (默认隐藏) -->
+        <div id="access-check-wrap" style="display:none;">
+          <!-- 场景一：完全符合条件 -->
+          <div class="access-check-card access-pass" id="access-pass">
+            <div class="access-check-header">
+              <span class="access-check-status pass">✅ 准入通过</span>
+              <span class="access-check-score">信用评分：78分（良好）</span>
+            </div>
+            <div class="access-check-body">
+              <p style="margin-bottom:0.75rem;color:hsl(var(--foreground));">恭喜！贵司已通过融资准入审核，具备融资申请资格。</p>
+              <div class="access-check-info">
+                <div class="access-check-row">
+                  <span class="label">建议融资额度</span>
+                  <span class="val" style="color:hsl(var(--primary));font-weight:700;">¥350,000</span>
+                </div>
+                <div class="access-check-row">
+                  <span class="label">可融资项目</span>
+                  <span class="val">3个项目订单</span>
+                </div>
+                <div class="access-check-row">
+                  <span class="label">适用融资比例</span>
+                  <span class="val">订单金额的70%</span>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:center;margin-top:1rem;">
+              <button class="btn btn-primary" onclick="showApplyForm()">立即申请融资</button>
+            </div>
+          </div>
+
+          <!-- 场景二：硬性条件不满足 -->
+          <div class="access-check-card access-fail" id="access-fail" style="display:none;">
+            <div class="access-check-header">
+              <span class="access-check-status fail">⚠️ 暂不符合融资资格</span>
+            </div>
+            <div class="access-check-body">
+              <p style="margin-bottom:0.75rem;color:hsl(var(--foreground));">贵司目前暂不符合融资申请条件，请查看以下不满足项：</p>
+              <div class="access-check-fail-list">
+                <div class="fail-item">
+                  <span class="fail-icon">✗</span>
+                  <div>
+                    <strong>入驻平台未满12个月</strong>
+                    <div class="fail-detail">当前：8个月 | 需满足：≥12个月</div>
+                  </div>
+                </div>
+                <div class="fail-item">
+                  <span class="fail-icon">✗</span>
+                  <div>
+                    <strong>历史交易记录不足</strong>
+                    <div class="fail-detail">当前：已完成2笔订单 | 需满足：≥3笔</div>
+                  </div>
+                </div>
+              </div>
+              <div class="access-check-tips">
+                <div class="tips-title">提升建议</div>
+                <ul>
+                  <li>继续在平台承接项目，积累交易记录</li>
+                  <li>满12个月后系统将自动重新评估</li>
+                  <li>预计可申请时间：<strong>2026-12-15</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- 场景三：软性指标不达标，需补充材料 -->
+          <div class="access-check-card access-warn" id="access-warn" style="display:none;">
+            <div class="access-check-header">
+              <span class="access-check-status warn">⚠️ 需补充材料提升额度</span>
+              <span class="access-check-score">信用评分：62分（待提升）</span>
+            </div>
+            <div class="access-check-body">
+              <p style="margin-bottom:0.75rem;color:hsl(var(--foreground));">贵司可通过补充以下材料提升融资额度，或直接申请较低额度。</p>
+              <div class="access-check-info">
+                <div class="access-check-row">
+                  <span class="label">当前评估</span>
+                  <span class="val" style="color:hsl(var(--warning));">历史订单履约率：65%（目标≥80%）</span>
+                </div>
+                <div class="access-check-row">
+                  <span class="label">建议初始额度</span>
+                  <span class="val" style="color:hsl(var(--warning));">订单金额的50%（¥175,000）</span>
+                </div>
+              </div>
+              <div class="access-check-supplement">
+                <div class="supplement-title">补充材料（可提升额度至80%）：</div>
+                <div class="supplement-item">
+                  <input type="checkbox" id="supplement-report" />
+                  <label for="supplement-report">近一年财务报表</label>
+                </div>
+                <div class="supplement-item">
+                  <input type="checkbox" id="supplement-deposit" />
+                  <label for="supplement-deposit">履约保证金缴纳（¥50,000）</label>
+                </div>
+                <div class="supplement-item">
+                  <input type="checkbox" id="supplement-asset" />
+                  <label for="supplement-asset">其他资产证明</label>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:0.75rem;margin-top:1rem;justify-content:center;">
+              <button class="btn btn-primary" onclick="showApplyForm()">提交补充材料并申请</button>
+            </div>
+          </div>
+
+          <!-- 场景切换（原型演示用） -->
+          <div id="access-scenario-demo" style="margin-top:1rem;text-align:right;font-size:var(--text-xs);color:hsl(var(--muted-foreground));">
+            <span>准入场景演示：</span>
+            <select id="access-scenario-select" onchange="switchAccessScenario(this.value)" style="font-size:var(--text-xs);border:1px solid hsl(var(--border));border-radius:var(--radius-sm);padding:0.125rem 0.25rem;background:#fff;margin-left:0.25rem;">
+              <option value="pass">场景一：完全符合</option>
+              <option value="fail">场景二：硬性条件不满足</option>
+              <option value="warn">场景三：软性指标不达标</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="unactivated-form-wrap" style="display:none;">
+          <div class="apply-layout">
+          <div class="apply-form-card">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+              <button class="btn btn-outline" onclick="goBackToAccessCheck()" style="font-size:0.75rem;padding:0.25rem 0.75rem;">← 返回</button>
+              <h3 style="font-size:var(--text-base);font-weight:600;color:hsl(var(--foreground));margin:0;">融资申请</h3>
+            </div>
+            <div style="background:#fff8e1;border:1px solid #ffe58f;border-radius:var(--radius-sm);padding:0.75rem;margin-bottom:1rem;font-size:0.8125rem;color:#856404;">
+              <strong>融资服务声明：</strong>本融资服务由恒丰银行提供，星苹台仅提供信息撮合和技术服务，不直接提供贷款。融资款由银行直接发放至监管账户，平台不经手资金。
+            </div>
+            <div class="form-group">
+              <label>选择融资项目订单<span class="required">*</span></label>
+              <div style="margin-bottom:0.5rem;">
+                <button class="btn btn-outline" onclick="openOrderSelectModal()" style="font-size:0.8125rem;">选择订单</button>
+                <span style="font-size:0.75rem;color:hsl(var(--muted-foreground));margin-left:0.5rem;">请从中台项目订单中选择融资依据</span>
+              </div>
+              <div id="selected-orders-list" style="background:hsl(var(--secondary));border-radius:var(--radius-sm);padding:0;min-height:60px;">
+                <table class="finance-table" style="margin-bottom:0;">
+                  <thead>
+                    <tr>
+                      <th>项目来源</th>
+                    <th>项目单号</th>
+                    <th>订单金额</th>
+                    <th>订单状态</th>
+                    <th>建议融资</th>
+                    <th>融资期限</th>
+                    <th>年化利率</th>
+                    <th>预计利息</th>
+                    <th style="width:50px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>国家电网</td>
+                    <td>GW-2026-0723-A</td>
+                    <td class="amount">¥500,000</td>
+                    <td><span class="bill-status paid">进行中</span></td>
+                    <td><input type="text" class="finance-amount-input" value="" placeholder="¥350,000 (70%)" style="width:100px;padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.75rem;text-align:right;outline:none;" onchange="recalcFinanceTotal()" /></td>
+                    <td><select class="order-term-select" onchange="recalcFinanceTotal()" style="width:72px;height:1.75rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.6875rem;padding:0 0.25rem;background:#fff;">
+                    <option value="90" selected>90天</option>
+                    <option value="120">120天</option>
+                    <option value="180">180天</option>
+                    <option value="240">240天</option>
+                    <option value="360">360天</option>
+                  </select></td>
+                    <td style="font-size:0.75rem;">5.5%</td>
+                    <td class="amount" style="font-size:0.75rem;">¥4,747</td>
+                    <td><span style="cursor:pointer;color:hsl(var(--muted-foreground));" onclick="removeSelectedOrder(this)" title="移除">×</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div style="display:flex;gap:1.5rem;margin-bottom:1rem;padding:0.75rem 1rem;background:hsl(var(--secondary));border-radius:var(--radius-sm);font-size:0.8125rem;">
+              <div><span style="color:hsl(var(--muted-foreground));">信用等级：</span><span style="font-weight:600;color:hsl(var(--success));">A级</span><span style="color:hsl(var(--muted-foreground));margin-left:0.25rem;">（可融上限80%）</span></div>
+              <div><span style="color:hsl(var(--muted-foreground));">单户剩余总额度：</span><span style="font-weight:600;color:hsl(var(--primary));">¥350,000.00</span></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>企业名称<span class="required">*</span></label>
+                <input type="text" placeholder="系统自动带出" value="XX科技有限公司" />
+                <div class="form-hint">已认证企业信息，系统自动填充</div>
+              </div>
+              <div class="form-group">
+                <label>统一社会信用代码<span class="required">*</span></label>
+                <input type="text" placeholder="系统自动带出" value="911101XXXXXXXXXX" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>联系人<span class="required">*</span></label>
+                <input type="text" placeholder="请输入联系人姓名" />
+              </div>
+              <div class="form-group">
+                <label>联系电话<span class="required">*</span></label>
+                <input type="text" placeholder="请输入联系电话" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>申请融资金额<span class="required">*</span></label>
+                <input type="text" id="finance-amount-input" placeholder="选择订单后自动计算" value="¥350,000.00" readonly style="background:hsl(var(--secondary));cursor:default;" />
+                <div class="form-hint">合计已选订单融资额度：¥350,000</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>融资用途说明</label>
+              <textarea placeholder="请说明融资用途，如：用于国网项目A办公设备采购">用于国网项目A办公设备采购</textarea>
+            </div>
+            <div class="form-group">
+              <label>补充材料</label>
+              <div class="upload-zone" onclick="alert('模拟上传：可选择上传营业执照、财务报表、项目合同等补充材料')">
+                <div style="font-size:1.5rem;margin-bottom:0.5rem;">📁</div>
+                <div>点击上传或拖拽文件到此处</div>
+                <div class="form-hint">支持 PDF、JPG、PNG，单个文件不超过10MB</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="agreement-list">
+                <div class="agreement-item">
+                  <input type="checkbox" id="agree-service-unactivated" />
+                  <label for="agree-service-unactivated">我已阅读并同意 <a href="javascript:void(0)" onclick="alert('《融资服务协议》（含平台服务条款）\n\n一、平台角色与免责声明\n1. 星苹台仅提供融资信息撮合和技术服务，不直接提供贷款\n2. 贷款资金由合作银行（恒丰银行）直接发放，平台不接触、不归集资金\n3. 平台不对融资结果提供任何形式的担保或承诺\n4. 融资利率、额度、审批结果以银行最终审批为准\n\n二、平台服务费\n1. 平台按实际使用融资额的0.5%收取技术服务费\n2. 服务费在采购时逐笔扣除，按次计费\n3. 服务费不属于利息或金融收益，为技术服务合理对价\n\n三、数据授权\n1. 供应商授权平台向合作银行传输订单数据、交易数据及企业信息\n2. 平台仅作为数据桥梁，不参与信用评估决策\n3. 数据传输遵循最小必要原则\n\n四、融资规则\n5. 额度使用规则\n6. 受托支付条款\n7. 还款义务\n8. 逾期处理方式')">《融资服务协议》</a></label>
+                </div>
+                <div class="agreement-item">
+                  <input type="checkbox" id="agree-credit-unactivated" />
+                  <label for="agree-credit-unactivated">我已阅读并同意 <a href="javascript:void(0)" onclick="alert('《征信授权书》（含数据授权）\n\n一、征信授权\n1. 授权星苹台平台向合作银行（恒丰银行）传输本企业征信信息\n2. 用于信用评估与额度核定\n3. 平台仅作为数据桥梁，不参与信用评估决策\n\n二、数据授权\n1. 授权平台向银行传输：中台项目订单数据、历史交易数据、企业工商信息\n2. 数据用途：银行风控评估、授信审批、贷后管理\n3. 数据传输遵循最小必要原则，仅传输与融资申请相关的必要信息\n4. 平台对数据真实性负责，确保推送数据真实、准确、完整')">《征信授权书》</a></label>
+                </div>
+                <div class="agreement-item">
+                  <input type="checkbox" id="agree-pledge-unactivated" />
+                  <label for="agree-pledge-unactivated">我已阅读并同意 <a href="javascript:void(0)" onclick="alert('《应收账款质押协议》\n\n1. 质押标的：以融资项目订单项下应收账款设定质押\n2. 质押范围：质押合同项下的全部应收账款\n3. 质权人：恒丰银行（资金方）\n4. 质押期限：融资期间+还款后30日\n5. 平台不参与质押管理，仅为信息传输方')">《应收账款质押协议》</a></label>
+                </div>
+                <div class="agreement-item">
+                  <input type="checkbox" id="agree-lock-unactivated" />
+                  <label for="agree-lock-unactivated">我已确认 <a href="javascript:void(0)" onclick="alert('《回款账户锁定协议》\n\n1. 融资期间对应项目订单的回款账户将被锁定为恒丰银行监管专户\n2. 项目回款进入监管账户后将由银行自动划扣还款\n3. 还款完成后，剩余资金由银行自动释放\n4. 回款账户锁定将在融资结清后自动解除\n5. 平台不参与资金归集和清算，仅接收银行推送的还款通知')">回款账户锁定协议</a></label>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+              <button class="btn btn-primary" onclick="submitUnactivatedApply()">提交申请</button>
+              <button class="btn btn-outline" onclick="switchActivation('activated')">取消</button>
+            </div>
+          </div>
+
+          <div class="apply-sidebar">
+            <div class="apply-sidebar-card">
+              <div class="apply-sidebar-title">📌 申请须知</div>
+              <ul class="apply-tip-list">
+                <li>平台前置筛选 + 银行终审：1-3个工作日</li>
+                <li>融资比例：订单金额的70%-80%</li>
+                <li>融资期限：90天-360天灵活可选</li>
+                <li>受托支付：放款至商城监管账户</li>
+                <li class="warn">融资额度绑定项目订单，不可跨项目挪用</li>
+              </ul>
+            </div>
+            <div class="apply-sidebar-card">
+              <div class="apply-sidebar-title">💡 费用说明</div>
+              <div class="fee-explain">
+                <strong>年化利率</strong>：根据订单金额、买方信用、供应商信用综合定价，每笔订单可能不同<br>
+                <strong>服务费率</strong>：<strong>0.5%</strong>（平台收取，采购时逐笔扣除）<br>
+                <strong>逾期罚息</strong>：按未还金额的 <strong>0.05%/天</strong> 计算（银行收取）<br>
+                <strong>还款方式</strong>：项目回款进入监管专户，银行自动划扣
+              </div>
+            </div>
+            <div class="apply-sidebar-card">
+              <div class="apply-sidebar-title">💰 费用试算</div>
+              <div class="cost-calc" id="cost-calc">
+                <div class="cost-calc-row"><span class="cost-calc-label">融资金额</span><span class="cost-calc-val" id="calc-amount">¥0</span></div>
+                <div class="cost-calc-row"><span class="cost-calc-label">融资期限</span><span class="cost-calc-val" id="calc-term">--</span></div>
+                <div class="cost-calc-row"><span class="cost-calc-label">年化利率</span><span class="cost-calc-val">5.5%</span></div>
+                <div class="cost-calc-row"><span class="cost-calc-label">银行利息</span><span class="cost-calc-val" id="calc-interest">¥0<span class="cost-calc-party">（还款时结算）</span></span></div>
+                <div class="cost-calc-row"><span class="cost-calc-label">平台服务费</span><span class="cost-calc-val" id="calc-fee">¥0<span class="cost-calc-party">（采购时逐笔扣除）</span></span></div>
+                <div class="cost-calc-row"><span class="cost-calc-label">合计成本</span><span class="cost-calc-val cost-calc-total" id="calc-total">¥0</span></div>
+                <div class="cost-calc-row"><span class="cost-calc-label">综合年化成本</span><span class="cost-calc-val cost-calc-total" id="calc-apr">≈--</span></div>
+              </div>
+              <div class="cost-calc-rate">* 以上为预估费用，实际以银行审批结果为准</div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div id="unactivated-result-wrap" style="display:none;">
+          <div class="apply-layout">
+            <div class="apply-form-card">
+              <div class="apply-result">
+                <div class="apply-result-icon">✅</div>
+                <h3>申请已提交成功</h3>
+                <p>申请成功，需要1-3个工作日审核，请等待审核结果</p>
+                <div class="result-info">
+                  <div>申请编号：<strong id="result-apply-no">-</strong></div>
+                  <div>申请类型：<strong id="result-apply-type">-</strong></div>
+                  <div>提交时间：<strong id="result-apply-time">-</strong></div>
+                  <div>当前状态：<strong style="color:hsl(var(--warning));">银行审核中</strong></div>
+                </div>
+                <div style="margin-top:1rem;text-align:center;">
+                  <button class="btn btn-primary" onclick="switchActivation('activated')">查看结果（审核通过）</button>
+                  <button class="btn btn-outline" onclick="goToStep4('fail')" style="margin-left:0.5rem;">查看结果（审核未通过）</button>
+                </div>
+              </div>
+            </div>
+            <div class="apply-sidebar">
+              <div class="apply-sidebar-card">
+                <div class="apply-sidebar-title">📌 审核说明</div>
+                <ul class="apply-tip-list">
+                  <li>银行将在1-3个工作日内完成审核</li>
+                  <li>审核结果将通过站内信和短信通知</li>
+                  <li>审核通过后额度自动生效</li>
+                  <li class="warn">请保持联系方式畅通</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /activation-unactivated -->
+
+      <!-- 步骤4：查看结果 -->
+      <div id="unactivated-step4-wrap" style="display:none;">
+        <div class="apply-layout">
+          <div class="apply-form-card">
+            <!-- 审核通过 -->
+            <div id="step4-pass" class="apply-result" style="display:none;">
+              <div class="apply-result-icon">✅</div>
+              <h3>审核已通过</h3>
+              <p>恭喜！您的订单融资申请已通过银行审核，额度已生效。</p>
+              <div class="result-info">
+                <div>申请编号：<strong id="step4-apply-no">-</strong></div>
+                <div>授信额度：<strong style="color:hsl(var(--success));">¥500,000.00</strong></div>
+                <div>服务费率：<strong>0.3%-0.5%（按订单阶梯定价）</strong></div>
+                <div>生效时间：<strong id="step4-active-time">-</strong></div>
+                <div>当前状态：<strong style="color:hsl(var(--success));">已生效</strong></div>
+              </div>
+              <div style="margin-top:1rem;text-align:center;">
+                <button class="btn btn-primary" onclick="switchActivation('activated')">进入金融中心</button>
+              </div>
+            </div>
+            <!-- 审核未通过 -->
+            <div id="step4-fail" class="apply-result" style="display:none;">
+              <div class="apply-result-icon">⛔</div>
+              <h3 style="color:hsl(var(--destructive));">审核未通过</h3>
+              <p style="color:hsl(var(--muted-foreground));">您的订单融资开通申请未通过审核，请查看失败原因并重新提交申请。</p>
+              <div class="result-info">
+                <div>申请编号：<strong id="step4-fail-apply-no">-</strong></div>
+                <div>审核时间：<strong id="step4-fail-time">-</strong></div>
+                <div>审核结果：<strong style="color:hsl(var(--destructive));">不通过</strong></div>
+              </div>
+              <div style="background:hsl(var(--muted));border-radius:var(--radius-sm);padding:1rem;margin-top:0.75rem;text-align:left;">
+                <label style="font-size:var(--text-xs);color:hsl(var(--muted-foreground));display:block;margin-bottom:0.25rem;">不通过原因</label>
+                <div style="color:hsl(var(--destructive));line-height:1.6;font-size:var(--text-sm);">
+                  1. 企业征信评分不足，当前信用等级未达到订单融资开通标准（需B级以上）<br>
+                  2. 企业经营年限不足2年，需满足至少2年持续经营记录<br>
+                  3. 提交的财务报表信息不完整，缺少最近一期资产负债表
+                </div>
+              </div>
+              <div style="margin-top:1rem;text-align:center;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="showApplyForm()" style="white-space:nowrap;">重新提交申请</button>
+                <button class="btn btn-outline" onclick="alert('客服热线：400-xxx-xxxx\n工作时间：周一至周五 9:00-18:00')" style="white-space:nowrap;">联系客服</button>
+              </div>
+            </div>
+          </div>
+          <div class="apply-sidebar">
+            <div class="apply-sidebar-card">
+              <div class="apply-sidebar-title">📌 说明</div>
+              <ul class="apply-tip-list">
+                <li>审核通过后额度即时生效，可用于商城采购</li>
+                <li>如审核未通过，可根据驳回原因完善资料后重新申请</li>
+                <li>如有疑问可联系客服热线：400-xxx-xxxx</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div>
+  </div>
+</div>
+
+<!-- 还款Modal -->
+<div class="modal-overlay" id="repay-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">确认还款</div>
+      <button class="modal-close" onclick="window.closeModal('repay-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:0.75rem;font-size:var(--text-sm);font-weight:600;color:hsl(var(--foreground));">选择要还款的账单</div>
+      <div id="repay-bill-list">
+        <div class="repay-bill-item">
+          <input type="checkbox" checked data-bill="BL-20260805-0012" data-amount="128640" onchange="updateRepayTotal()" />
+          <div class="repay-bill-info">
+            <div class="repay-bill-no">BL-20260805-0012 | 关联 PO-20260805-0038</div>
+            <div class="repay-bill-amount">¥128,640.00</div>
+            <div class="repay-bill-due">到期日：2026-10-05</div>
+          </div>
+        </div>
+        <div class="repay-bill-item">
+          <input type="checkbox" checked data-bill="BL-20260720-0008" data-amount="56000" onchange="updateRepayTotal()" />
+          <div class="repay-bill-info">
+            <div class="repay-bill-no">BL-20260720-0008 | 关联 PO-20260720-0015</div>
+            <div class="repay-bill-amount">¥56,000.00</div>
+            <div class="repay-bill-due">到期日：2026-08-19</div>
+          </div>
+        </div>
+        <div class="repay-bill-item">
+          <input type="checkbox" data-bill="BL-20260610-0005" data-amount="42777" onchange="updateRepayTotal()" />
+          <div class="repay-bill-info">
+            <div class="repay-bill-no">BL-20260610-0005 | 关联 PO-20260610-0012</div>
+            <div class="repay-bill-amount">¥42,777.00 <span style="font-size:var(--text-xs);color:hsl(var(--destructive));">(含罚息 ¥567)</span></div>
+            <div class="repay-bill-due overdue">已逾期 27 天</div>
+          </div>
+        </div>
+      </div>
+      <div class="repay-summary">
+        <span style="font-size:var(--text-sm);">还款金额合计</span>
+        <span class="repay-total" id="repay-total">¥184,640.00</span>
+      </div>
+      <div class="form-group" style="margin-top:0.75rem;">
+        <label>还款方式</label>
+        <select id="repay-payment-method">
+          <option value="bank_transfer">对公转账（恒丰银行）</option>
+          <option value="unionpay">银联支付</option>
+        </select>
+      </div>
+      <div id="repay-bank-info" style="padding:0.75rem;background:hsl(var(--muted));border-radius:var(--radius-sm);font-size:var(--text-xs);margin-top:0.5rem;">
+        <p>收款户名：恒丰银行股份有限公司上海浦东分行</p>
+        <p>开户银行：恒丰银行上海浦东分行</p>
+        <p>账号：6223 **** **** 8888</p>
+        <p style="margin-top:0.25rem;color:hsl(var(--warning));">附言请填写账单编号，转账后上传凭证</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid hsl(var(--border));">
+        <button class="btn btn-outline" onclick="window.closeModal('repay-modal')">取消</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="confirmRepay()">确认还款</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 账单详情 Modal -->
+<div class="modal-overlay" id="bill-detail-modal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <div class="modal-title">账单详情</div>
+      <button class="modal-close" onclick="window.closeModal('bill-detail-modal')">&times;</button>
+    </div>
+    <div id="bill-detail-content" class="modal-body" style="padding:1.25rem;">
+    </div>
+    <div style="padding:0 1.25rem 1.25rem;display:flex;gap:0.5rem;">
+      <button class="btn btn-outline" style="flex:1;" onclick="window.closeModal('bill-detail-modal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 凭证详情 Modal -->
+<div class="modal-overlay" id="voucher-detail-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">还款凭证详情</div>
+      <button class="modal-close" onclick="window.closeModal('voucher-detail-modal')">&times;</button>
+    </div>
+    <div id="voucher-detail-content" class="modal-body" style="padding:1.25rem;">
+    </div>
+    <div style="padding:0 1.25rem 1.25rem;display:flex;gap:0.5rem;">
+      <button class="btn btn-outline" style="flex:1;" onclick="window.closeModal('voucher-detail-modal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 中台订单选择Modal -->
+<div class="modal-overlay" id="order-select-modal">
+  <div class="modal" style="max-width:750px;">
+    <div class="modal-title" style="padding:1rem 1.25rem;">选择中台项目订单</div>
+    <div style="padding:0.75rem 1rem;border-bottom:1px solid hsl(var(--border));">
+      <input type="text" placeholder="搜索项目来源/项目单号..." style="padding:0.375rem 0.625rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.75rem;width:240px;outline:none;" />
+    </div>
+    <div style="max-height:360px;overflow-y:auto;">
+      <table class="finance-table" id="order-select-table">
+        <thead>
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="select-all-orders" onchange="toggleSelectAllOrders(this)" /></th>
+            <th>项目来源</th>
+            <th>项目单号</th>
+            <th>订单金额</th>
+            <th>订单状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" class="order-check" value="国网项目A" data-name="国网项目A" data-desc="办公设备采购" data-amount="500000" data-finance="350000" data-source="国家电网" data-order-no="GW-2026-0723-A" data-status="进行中" checked /></td>
+            <td>国家电网</td>
+            <td>GW-2026-0723-A</td>
+            <td class="amount">¥500,000</td>
+            <td><span class="bill-status paid">进行中</span></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="order-check" value="国网项目B" data-name="国网项目B" data-desc="打印耗材采购" data-amount="300000" data-finance="210000" data-source="国家电网" data-order-no="GW-2026-0530-B" data-status="进行中" /></td>
+            <td>国家电网</td>
+            <td>GW-2026-0530-B</td>
+            <td class="amount">¥300,000</td>
+            <td><span class="bill-status paid">进行中</span></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="order-check" value="军网项目C" data-name="军网项目C" data-desc="电脑配件采购" data-amount="200000" data-finance="140000" data-source="军队采购网" data-order-no="JW-2026-0810-C" data-status="进行中" /></td>
+            <td>军队采购网</td>
+            <td>JW-2026-0810-C</td>
+            <td class="amount">¥200,000</td>
+            <td><span class="bill-status paid">进行中</span></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="order-check" value="政府项目D" data-name="政府项目D" data-desc="安防设备采购" data-amount="800000" data-finance="560000" data-source="政府采购网" data-order-no="ZF-2026-0401-D" data-status="进行中" /></td>
+            <td>政府采购网</td>
+            <td>ZF-2026-0401-D</td>
+            <td class="amount">¥800,000</td>
+            <td><span class="bill-status paid">进行中</span></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="order-check" value="国网项目E" data-name="国网项目E" data-desc="信息化设备采购" data-amount="450000" data-finance="315000" /></td>
+            <td>国家电网</td>
+            <td>GW-2026-0615-E</td>
+            <td class="amount">¥450,000</td>
+            <td><span class="bill-status pending">待确认</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:0.75rem 1rem;border-top:1px solid hsl(var(--border));display:flex;justify-content:flex-end;gap:0.5rem;">
+      <span id="order-select-count" style="font-size:0.75rem;color:hsl(var(--muted-foreground));margin-right:auto;line-height:2rem;">已选 1 个订单</span>
+      <button class="btn btn-outline" onclick="closeOrderSelectModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmOrderSelect()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 申请提额 Modal -->
+<div class="modal-overlay" id="apply-modal">
+  <div class="modal" style="max-width:860px;">
+    <div class="modal-header">
+      <div class="modal-title">申请提额</div>
+      <button class="modal-close" onclick="window.closeModal('apply-modal')">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:1.25rem;">
+      <div class="apply-layout" style="padding:0;">
+        <div class="apply-form-card" style="border:none;box-shadow:none;padding:0;">
+          <div style="background:#fff8e1;border:1px solid #ffe58f;border-radius:var(--radius-sm);padding:0.75rem;margin-bottom:1rem;font-size:0.8125rem;color:#856404;">
+            <strong>融资服务声明：</strong>本融资服务由恒丰银行提供，星苹台仅提供信息撮合和技术服务，不直接提供贷款。融资款由银行直接发放至监管账户，平台不经手资金。
+          </div>
+          <!-- 选择融资项目订单 -->
+          <div class="form-group">
+            <label>选择融资项目订单<span class="required">*</span></label>
+            <div style="margin-bottom:0.5rem;">
+              <button class="btn btn-outline" onclick="openOrderSelectModal()" style="font-size:0.8125rem;">选择订单</button>
+              <span style="font-size:0.75rem;color:hsl(var(--muted-foreground));margin-left:0.5rem;">请从中台项目订单中选择融资依据</span>
+            </div>
+            <div id="apply-modal-orders-list" style="background:hsl(var(--secondary));border-radius:var(--radius-sm);padding:0;min-height:60px;">
+              <table class="finance-table" style="margin-bottom:0;">
+                <thead>
+                  <tr>
+                    <th>项目来源</th>
+                    <th>项目单号</th>
+                    <th>订单金额</th>
+                    <th>订单状态</th>
+                    <th>建议融资</th>
+                    <th>融资期限</th>
+                    <th>年化利率</th>
+                    <th>预计利息</th>
+                    <th style="width:50px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>国家电网</td>
+                    <td>GW-2026-0723-A</td>
+                    <td class="amount">¥500,000</td>
+                    <td><span class="bill-status paid">进行中</span></td>
+                    <td><input type="text" class="finance-amount-input" value="" placeholder="¥350,000 (70%)" style="width:100px;padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.75rem;text-align:right;outline:none;" onchange="recalcApplyModalTotal()" /></td>
+                    <td><select class="order-term-select" onchange="recalcApplyModalTotal()" style="width:72px;height:1.75rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.6875rem;padding:0 0.25rem;background:#fff;">
+                    <option value="90" selected>90天</option>
+                    <option value="120">120天</option>
+                    <option value="180">180天</option>
+                    <option value="240">240天</option>
+                    <option value="360">360天</option>
+                  </select></td>
+                    <td style="font-size:0.75rem;">5.5%</td>
+                    <td class="amount" style="font-size:0.75rem;" id="modal-order-interest">¥4,747</td>
+                    <td><span style="cursor:pointer;color:hsl(var(--muted-foreground));" onclick="removeApplyModalOrder(this)" title="移除">×</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;gap:1.5rem;margin:0.75rem 0 0.5rem 0;padding:0.75rem 1rem;background:hsl(var(--secondary));border-radius:var(--radius-sm);font-size:0.8125rem;">
+              <div><span style="color:hsl(var(--muted-foreground));">信用等级：</span><span style="font-weight:600;color:hsl(var(--success));">A级</span><span style="color:hsl(var(--muted-foreground));margin-left:0.25rem;">（可融上限80%）</span></div>
+              <div><span style="color:hsl(var(--muted-foreground));">单户剩余总额度：</span><span style="font-weight:600;color:hsl(var(--primary));">¥350,000.00</span></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>当前总额度</label>
+              <input type="text" value="¥700,000.00" disabled style="background:hsl(var(--muted));color:hsl(var(--muted-foreground));" />
+            </div>
+            <div class="form-group">
+              <label>申请提额金额<span class="required">*</span></label>
+              <input type="text" id="apply-modal-amount" placeholder="选择订单后自动计算" value="" readonly style="background:hsl(var(--secondary));cursor:default;" />
+              <div class="form-hint" id="apply-modal-finance-hint">合计已选订单融资额度：请选择订单</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>联系人</label>
+              <input type="text" value="张伟" disabled style="background:hsl(var(--muted));color:hsl(var(--muted-foreground));" />
+              <div class="form-hint">已认证企业信息，不可修改</div>
+            </div>
+            <div class="form-group">
+              <label>联系电话</label>
+              <input type="text" value="138****5678" disabled style="background:hsl(var(--muted));color:hsl(var(--muted-foreground));" />
+              <div class="form-hint">已认证企业信息，不可修改</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>融资用途说明</label>
+            <textarea placeholder="请说明融资用途，如：用于国网项目A办公设备采购">近期承接京东平台3个大型政企采购项目，预计月采购额将超过150万，当前70万额度难以满足资金周转需求，申请提额至150万。</textarea>
+          </div>
+          <div class="form-group">
+            <label>补充材料</label>
+            <div class="upload-zone" onclick="alert('模拟上传：可选择上传营业执照、财务报表、项目合同等补充材料')">
+              <div style="font-size:1.5rem;margin-bottom:0.5rem;">📁</div>
+              <div>点击上传或拖拽文件到此处</div>
+              <div class="form-hint">支持 PDF、JPG、PNG，单个文件不超过10MB</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="agreement-list">
+              <div class="agreement-item">
+                <input type="checkbox" id="agree-service-modal" />
+                <label for="agree-service-modal">我已阅读并同意 <a href="javascript:void(0)" onclick="alert('《融资服务协议》（含平台服务条款）\n\n一、平台角色与免责声明\n1. 星苹台仅提供融资信息撮合和技术服务，不直接提供贷款\n2. 贷款资金由合作银行（恒丰银行）直接发放，平台不接触、不归集资金\n3. 平台不对融资结果提供任何形式的担保或承诺\n4. 融资利率、额度、审批结果以银行最终审批为准\n\n二、平台服务费\n1. 平台按实际使用融资额的0.5%收取技术服务费\n2. 服务费在采购时逐笔扣除，按次计费\n3. 服务费不属于利息或金融收益，为技术服务合理对价\n\n三、数据授权\n1. 供应商授权平台向合作银行传输订单数据、交易数据及企业信息\n2. 平台仅作为数据桥梁，不参与信用评估决策\n3. 数据传输遵循最小必要原则\n\n四、融资规则\n5. 额度使用规则\n6. 受托支付条款\n7. 还款义务\n8. 逾期处理方式')">《融资服务协议》</a></label>
+              </div>
+              <div class="agreement-item">
+                <input type="checkbox" id="agree-credit-modal" />
+                <label for="agree-credit-modal">我已阅读并同意 <a href="javascript:void(0)" onclick="alert('《征信授权书》（含数据授权）\n\n一、征信授权\n1. 授权星苹台平台向合作银行（恒丰银行）传输本企业征信信息\n2. 用于信用评估与额度核定\n3. 平台仅作为数据桥梁，不参与信用评估决策\n\n二、数据授权\n1. 授权平台向银行传输：中台项目订单数据、历史交易数据、企业工商信息\n2. 数据用途：银行风控评估、授信审批、贷后管理\n3. 数据传输遵循最小必要原则，仅传输与融资申请相关的必要信息\n4. 平台对数据真实性负责，确保推送数据真实、准确、完整')">《征信授权书》</a></label>
+              </div>
+              <div class="agreement-item">
+                <input type="checkbox" id="agree-pledge-modal" />
+                <label for="agree-pledge-modal">我已阅读并同意 <a href="javascript:void(0)" onclick="alert('《应收账款质押协议》\n\n1. 质押标的：以融资项目订单项下应收账款设定质押\n2. 质押范围：质押合同项下的全部应收账款\n3. 质权人：恒丰银行（资金方）\n4. 质押期限：融资期间+还款后30日\n5. 平台不参与质押管理，仅为信息传输方')">《应收账款质押协议》</a></label>
+              </div>
+              <div class="agreement-item">
+                <input type="checkbox" id="agree-lock-modal" />
+                <label for="agree-lock-modal">我已确认 <a href="javascript:void(0)" onclick="alert('《回款账户锁定协议》\n\n1. 融资期间对应项目订单的回款账户将被锁定为恒丰银行监管专户\n2. 项目回款进入监管账户后将由银行自动划扣还款\n3. 还款完成后，剩余资金由银行自动释放\n4. 回款账户锁定将在融资结清后自动解除\n5. 平台不参与资金归集和清算，仅接收银行推送的还款通知')">回款账户锁定协议</a></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="apply-sidebar">
+          <div class="apply-sidebar-card">
+            <div class="apply-sidebar-title">📌 申请须知</div>
+            <ul class="apply-tip-list">
+              <li>平台前置筛选 + 银行终审：1-3个工作日</li>
+              <li>提额上限：当前总额度的2倍</li>
+              <li class="warn">提额申请需还款记录良好</li>
+            </ul>
+          </div>
+          <div class="apply-sidebar-card">
+            <div class="apply-sidebar-title">💡 费用说明</div>
+            <div class="fee-explain">
+              <strong>年化利率</strong>：根据订单金额、买方信用、供应商信用综合定价，每笔订单可能不同<br>
+              <strong>服务费率</strong>：<strong>0.5%</strong>（平台收取，采购时逐笔扣除）<br>
+              <strong>逾期罚息</strong>：按未还金额的 <strong>0.05%/天</strong> 计算<br>
+              <strong>还款方式</strong>：项目回款进入监管专户，银行自动划扣
+            </div>
+          </div>
+          <div class="apply-sidebar-card">
+            <div class="apply-sidebar-title">💰 费用试算</div>
+            <div class="cost-calc" id="modal-cost-calc">
+              <div class="cost-calc-row"><span class="cost-calc-label">融资金额</span><span class="cost-calc-val" id="modal-calc-amount">¥0</span></div>
+              <div class="cost-calc-row"><span class="cost-calc-label">融资期限</span><span class="cost-calc-val" id="modal-calc-term">--</span></div>
+              <div class="cost-calc-row"><span class="cost-calc-label">年化利率</span><span class="cost-calc-val">5.5%</span></div>
+              <div class="cost-calc-row"><span class="cost-calc-label">银行利息</span><span class="cost-calc-val" id="modal-calc-interest">¥0<span class="cost-calc-party">（还款时结算）</span></span></div>
+              <div class="cost-calc-row"><span class="cost-calc-label">平台服务费</span><span class="cost-calc-val" id="modal-calc-fee">¥0<span class="cost-calc-party">（采购时逐笔扣除）</span></span></div>
+              <div class="cost-calc-row"><span class="cost-calc-label">合计成本</span><span class="cost-calc-val cost-calc-total" id="modal-calc-total">¥0</span></div>
+              <div class="cost-calc-row"><span class="cost-calc-label">综合年化成本</span><span class="cost-calc-val cost-calc-total" id="modal-calc-apr">≈--</span></div>
+            </div>
+            <div class="cost-calc-rate">* 以上为预估费用，实际以银行审批结果为准</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 1.25rem 1.25rem;display:flex;gap:0.75rem;">
+      <button class="btn btn-outline" style="flex:1;" onclick="window.closeModal('apply-modal')">取消</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="submitApplyModal()">提交申请</button>
+    </div>
+</div>
+</div>
+
+<!-- 融资详情 Modal -->
+<div class="modal-overlay" id="finance-detail-modal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <div class="modal-title">融资详情</div>
+      <button class="modal-close" onclick="window.closeModal('finance-detail-modal')">&times;</button>
+    </div>
+    <div id="finance-detail-content" class="modal-body" style="padding:1.25rem;">
+      <!-- 动态填充 -->
+    </div>
+  </div>
+</div>
+
+<!-- 综合融资成本明示表弹窗 -->
+<div class="modal-overlay" id="compliance-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">⚠️ 综合融资成本明示表</span>
+      <span class="modal-close" onclick="window.closeModal('compliance-modal')">✕</span>
+    </div>
+    <div class="modal-body" style="padding:1.25rem;">
+      <div class="compliance-table">
+        <div class="compliance-row"><span class="compliance-label">贷款本金</span><span class="compliance-val" id="compliance-principal">¥350,000.00</span></div>
+        <div class="compliance-row"><span class="compliance-label">年化利率</span><span class="compliance-val">5.5%</span></div>
+        <div class="compliance-row"><span class="compliance-label">利息总额</span><span class="compliance-val" id="compliance-interest">¥9,452.05</span><span class="compliance-note">（银行收取，还款时结算）</span></div>
+        <div class="compliance-row"><span class="compliance-label">平台服务费率</span><span class="compliance-val">0.5%</span></div>
+        <div class="compliance-row"><span class="compliance-label">服务费总额</span><span class="compliance-val" id="compliance-fee">¥1,750.00</span><span class="compliance-note">（平台收取，采购时逐笔扣除）</span></div>
+        <div class="compliance-row" style="border-top:1px solid hsl(var(--border));padding-top:0.5rem;margin-top:0.25rem;"><span class="compliance-label" style="font-weight:700;">综合年化成本</span><span class="compliance-val" style="font-weight:700;color:#f43f5e;" id="compliance-apr">≈6.5%</span></div>
+        <div class="compliance-row"><span class="compliance-label">收费主体</span><span class="compliance-val">XX银行 / 星苹台平台</span></div>
+        <div class="compliance-row"><span class="compliance-label">支付方式</span><span class="compliance-val">利息到期支付 / 服务费采购时支付</span></div>
+      </div>
+      <div class="compliance-countdown" id="compliance-countdown">
+        ⏱ 请阅读完毕后再确认（剩余 <strong id="countdown-timer">10</strong> 秒）
+      </div>
+      <div style="margin-top:1rem;text-align:center;">
+        <button class="btn btn-primary" id="compliance-confirm-btn" disabled onclick="confirmCompliance()" style="min-width:180px;">我已阅读并确认（<span id="countdown-btn">10</span>s）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer-container"></div>
+<div id="mobile-nav-container"></div>
+<div id="cs-float-container"></div>
+<div id="cs-chat-modal-container"></div>
+<div id="inquiry-float-container"></div>
+<div id="inquiry-modal-container"></div>
+<script src="common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  window.openBillDetail = function(billNo) {
+    var billData = {
+      'BL-20260805-0012': { orderNo: 'PO-20260805-0038', principal: '¥128,000.00', interest: '¥1,260.00', fee: '¥640.00', total: '¥129,900.00', dueDate: '2026-10-05', status: '待还款', confirmDate: '2026-08-06', period: '按订单定制' },
+      'BL-20260720-0008': { orderNo: 'PO-20260720-0015', principal: '¥55,720.00', interest: '¥550.00', fee: '¥280.00', total: '¥56,550.00', dueDate: '2026-08-19', status: '待还款', confirmDate: '2026-06-20', period: '按订单定制' },
+      'BL-20260715-0010': { orderNo: 'PO-20260715-0021', principal: '¥85,000.00', interest: '¥840.00', fee: '¥0.00', total: '¥85,840.00', dueDate: '2026-08-14', status: '已还款', confirmDate: '2026-06-15', period: '按订单定制', repayTime: '2026-08-10 09:30', repayMethod: '结算还款' },
+      'BL-20260610-0005': { orderNo: 'PO-20260610-0012', principal: '¥42,000.00', interest: '¥415.00', fee: '¥210.00', total: '¥42,625.00', dueDate: '2026-07-10', status: '已逾期', confirmDate: '2026-05-11', period: '按订单定制', penalty: '¥567.00', overdueDays: '27天' }
+    };
+    var d = billData[billNo];
+    var html = '<div class="detail-grid">';
+    html += '<div class="detail-item"><span class="detail-label">账单编号</span><span class="detail-value">' + billNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">关联订单</span><span class="detail-value">' + d.orderNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">账单本金</span><span class="detail-value">' + d.principal + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">应付利息</span><span class="detail-value">' + d.interest + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">服务费</span><span class="detail-value">' + d.fee + '</span></div>';
+    if (d.penalty) { html += '<div class="detail-item"><span class="detail-label">逾期罚息</span><span class="detail-value" style="color:hsl(var(--destructive));">' + d.penalty + '</span></div>'; }
+    html += '<div class="detail-item"><span class="detail-label">账单合计</span><span class="detail-value" style="font-weight:600;">' + d.total + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">确认收货时间</span><span class="detail-value">' + d.confirmDate + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">账期天数</span><span class="detail-value">' + d.period + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">到期日</span><span class="detail-value">' + d.dueDate + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">状态</span><span class="detail-value">' + d.status + '</span></div>';
+    if (d.repayTime) { html += '<div class="detail-item"><span class="detail-label">还款时间</span><span class="detail-value">' + d.repayTime + '</span></div>'; }
+    if (d.repayMethod) { html += '<div class="detail-item"><span class="detail-label">还款方式</span><span class="detail-value">' + d.repayMethod + '</span></div>'; }
+    if (d.overdueDays) { html += '<div class="detail-item"><span class="detail-label">逾期天数</span><span class="detail-value" style="color:hsl(var(--destructive));">' + d.overdueDays + '</span></div>'; }
+    html += '</div>';
+    document.getElementById('bill-detail-content').innerHTML = html;
+    window.openModal('bill-detail-modal');
+  };
+
+  window.openFinanceDetail = function(financeNo) {
+    var fData = {
+      'FNC-2026-001': {
+        no: 'FNC-2026-001', source: '国家电网', project: 'GW-2026-0723-A', projectName: '办公设备采购',
+        applyDate: '2026-07-23', orderAmount: '¥500,000', financeAmount: '¥350,000', ratio: '70%',
+        used: '¥200,000', remain: '¥150,000', usageRate: '57%', dueDate: '2026-10-15',
+        status: '生效中', statusClass: 'bill-status paid', rate: '5.5%', feeRate: '0.5%',
+        term: '180天', approveDate: '2026-07-28', approveBank: '恒丰银行上海浦东分行',
+        bills: [
+          { no: 'BL-20260805-0012', order: 'PO-20260805-0038', amount: '¥128,640.00', remain: '¥128,640.00', dueDate: '2026-10-05', status: '待还款' },
+          { no: 'BL-20260720-0008', order: 'PO-20260720-0015', amount: '¥56,000.00', remain: '¥56,000.00', dueDate: '2026-08-19', status: '待还款' }
+        ]
+      },
+      'FNC-2026-002': {
+        no: 'FNC-2026-002', source: '国家电网', project: 'GW-2026-0615-B', projectName: '打印耗材采购',
+        applyDate: '2026-06-15', orderAmount: '¥300,000', financeAmount: '¥210,000', ratio: '70%',
+        used: '¥120,000', remain: '¥90,000', usageRate: '57%', dueDate: '2026-09-30',
+        status: '待生效', statusClass: 'bill-status pending', rate: '5.5%', feeRate: '0.5%',
+        term: '180天', approveDate: '2026-06-20', approveBank: '恒丰银行上海浦东分行',
+        bills: [
+          { no: 'BL-20260715-0010', order: 'PO-20260715-0021', amount: '¥85,000.00', remain: '¥0.00', dueDate: '2026-08-14', status: '已还款' },
+          { no: 'BL-20260610-0005', order: 'PO-20260610-0012', amount: '¥42,777.00', remain: '¥42,777.00', dueDate: '2026-07-10', status: '已逾期27天' }
+        ]
+      },
+      'FNC-2026-003': {
+        no: 'FNC-2026-003', source: '军网', project: 'JW-2026-0520-C', projectName: '电脑配件采购',
+        applyDate: '2026-05-20', orderAmount: '¥200,000', financeAmount: '¥140,000', ratio: '70%',
+        used: '¥0', remain: '¥140,000', usageRate: '0%', dueDate: '2026-11-05',
+        status: '已过期', statusClass: 'bill-status overdue', rate: '5.5%', feeRate: '0.5%',
+        term: '180天', approveDate: '2026-05-25', approveBank: '恒丰银行上海浦东分行',
+        bills: []
+      },
+      'FNC-2026-004': {
+        no: 'FNC-2026-004', source: '军网', project: 'JW-2026-0801-E', projectName: '安防设备采购',
+        applyDate: '2026-08-01', orderAmount: '¥150,000', financeAmount: '¥105,000', ratio: '70%',
+        used: '¥0', remain: '¥105,000', usageRate: '0%', dueDate: '-',
+        status: '已驳回', statusClass: 'bill-status', rate: '-', feeRate: '0.5%',
+        term: '-', approveDate: '-', approveBank: '-',
+        bills: [],
+        rejectReason: '订单金额未达最低融资门槛（5万元）'
+      }
+    };
+    var d = fData[financeNo];
+    if (!d) return;
+    var html = '';
+    html += '<div class="detail-section"><div class="detail-section-title">融资基本信息</div>';
+    html += '<div class="detail-grid">';
+    html += '<div class="detail-item"><span class="detail-label">融资编号</span><span class="detail-value">' + d.no + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">项目来源</span><span class="detail-value">' + d.source + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">项目单号</span><span class="detail-value">' + d.project + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">项目名称</span><span class="detail-value">' + d.projectName + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">申请时间</span><span class="detail-value">' + d.applyDate + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">审批通过时间</span><span class="detail-value">' + d.approveDate + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">审批银行</span><span class="detail-value">' + d.approveBank + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">融资状态</span><span class="detail-value"><span class="' + d.statusClass + '">' + d.status + '</span></span></div>';
+    html += '</div></div>';
+    html += '<div class="detail-section"><div class="detail-section-title">额度信息</div>';
+    html += '<div class="detail-grid">';
+    html += '<div class="detail-item"><span class="detail-label">订单金额</span><span class="detail-value">' + d.orderAmount + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">融资比例</span><span class="detail-value">' + d.ratio + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">融资额度</span><span class="detail-value">' + d.financeAmount + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">已用额度</span><span class="detail-value">' + d.used + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">剩余额度</span><span class="detail-value">' + d.remain + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">使用率</span><span class="detail-value">' + d.usageRate + '</span></div>';
+    html += '</div></div>';
+    html += '<div class="detail-section"><div class="detail-section-title">费用信息</div>';
+    html += '<div class="detail-grid">';
+    html += '<div class="detail-item"><span class="detail-label">年化利率</span><span class="detail-value">' + d.rate + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">服务费率</span><span class="detail-value">' + d.feeRate + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">融资期限</span><span class="detail-value">' + d.term + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">到期日</span><span class="detail-value">' + d.dueDate + '</span></div>';
+    html += '</div></div>';
+    if (d.rejectReason) {
+      html += '<div class="detail-section"><div class="detail-section-title">驳回原因</div>';
+      html += '<p style="font-size:var(--text-xs);color:hsl(var(--destructive));">' + d.rejectReason + '</p></div>';
+    }
+    if (d.bills.length > 0) {
+      html += '<div class="detail-section"><div class="detail-section-title">关联账单</div>';
+      html += '<table class="data-table" style="margin-bottom:0;"><thead><tr><th>账单编号</th><th>关联订单</th><th>账单金额</th><th>待还金额</th><th>到期日</th><th>状态</th></tr></thead><tbody>';
+      d.bills.forEach(function(b) {
+        html += '<tr><td>' + b.no + '</td><td>' + b.order + '</td><td class="num">' + b.amount + '</td><td class="num">' + b.remain + '</td><td>' + b.dueDate + '</td><td>' + b.status + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    document.getElementById('finance-detail-content').innerHTML = html;
+    window.openModal('finance-detail-modal');
+  };
+
+  window.openVoucherDetail = function(voucherNo) {
+    var vData = {
+      'RP-20260810-0001': { amount: '¥85,000.00', billNo: 'BL-20260715-0010', orderNo: 'PO-20260715-0021', method: '结算还款', time: '2026-08-10 09:30', status: '已到账', sysNo: 'SYS-20260810-0012', subject: '星苹台供应链管理有限公司', account: '6222 **** **** 1234', bankNo: 'BNK-20260810-0012', purpose: '货款结算-订单融资还款', bank: '恒丰银行上海浦东分行', transType: '对公转账', flowType: '自动扣款', bankResp: '交易成功' },
+      'RP-20260725-0002': { amount: '¥120,000.00', billNo: 'BL-20260701-0003', orderNo: 'PO-20260701-0008', method: '结算还款', time: '2026-07-25 14:15', status: '已到账', sysNo: 'SYS-20260725-0008', subject: '星苹台供应链管理有限公司', account: '6222 **** **** 1234', bankNo: 'BNK-20260725-0008', purpose: '货款结算-订单融资还款', bank: '恒丰银行上海浦东分行', transType: '对公转账', flowType: '自动扣款', bankResp: '交易成功' }
+    };
+    var d = vData[voucherNo];
+    var html = '<div class="detail-grid">';
+    html += '<div class="detail-item"><span class="detail-label">还款单号</span><span class="detail-value">' + voucherNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款金额</span><span class="detail-value" style="font-weight:600;">' + d.amount + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">关联账单</span><span class="detail-value">' + d.billNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">关联订单</span><span class="detail-value">' + d.orderNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款方式</span><span class="detail-value">' + d.method + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款时间</span><span class="detail-value">' + d.time + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">状态</span><span class="detail-value">' + d.status + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">系统流水号</span><span class="detail-value">' + d.sysNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款主体</span><span class="detail-value">' + d.subject + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款账号</span><span class="detail-value">' + d.account + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">银行流水号</span><span class="detail-value">' + d.bankNo + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款用途</span><span class="detail-value">' + d.purpose + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">还款银行</span><span class="detail-value">' + d.bank + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">转账类型</span><span class="detail-value">' + d.transType + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">流水类型</span><span class="detail-value">' + d.flowType + '</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">银行响应</span><span class="detail-value">' + d.bankResp + '</span></div>';
+    html += '</div>';
+    document.getElementById('voucher-detail-content').innerHTML = html;
+    window.openModal('voucher-detail-modal');
+  };
+
+  window.openApplyModal = function() {
+    window.openModal('apply-modal');
+    // 初始化费用试算
+    window.recalcApplyModalTotal();
+  };
+  window.submitApplyModal = function() {
+    if (!document.getElementById('agree-service-modal').checked || !document.getElementById('agree-credit-modal').checked || !document.getElementById('agree-pledge-modal').checked || !document.getElementById('agree-lock-modal').checked) {
+      alert('请先阅读并同意所有协议（融资服务协议、征信授权书、应收账款质押协议、回款账户锁定协议）');
+      return;
+    }
+    // 展示综合融资成本明示表（从弹窗费用试算中读取数据）
+    var principal = document.getElementById('modal-calc-amount').textContent;
+    var interest = document.getElementById('modal-calc-interest').textContent;
+    var fee = document.getElementById('modal-calc-fee').textContent;
+    var apr = document.getElementById('modal-calc-apr').textContent;
+    document.getElementById('compliance-principal').textContent = principal;
+    document.getElementById('compliance-interest').textContent = interest;
+    document.getElementById('compliance-fee').textContent = fee;
+    document.getElementById('compliance-apr').textContent = apr;
+    // 设置确认回调为提额提交
+    window._complianceCallback = function() {
+      alert('申请已提交成功！\n申请编号：APL-20260806-0001\n状态：审核中\n\n预计1-3个工作日内完成审核，请留意站内信和短信通知。');
+      window.closeModal('apply-modal');
+    };
+    window.showComplianceCountdown();
+  };
+
+  // 费用试算器
+  window.updateCostCalc = function(prefix) {
+    prefix = prefix || '';
+    var amountEl = document.getElementById(prefix + 'calc-amount');
+    var termEl = document.getElementById(prefix + 'calc-term');
+    var interestEl = document.getElementById(prefix + 'calc-interest');
+    var feeEl = document.getElementById(prefix + 'calc-fee');
+    var totalEl = document.getElementById(prefix + 'calc-total');
+    var aprEl = document.getElementById(prefix + 'calc-apr');
+    if (!amountEl || !interestEl || !feeEl || !totalEl) return;
+
+    // 从订单表格中读取每笔订单的金额和期限，计算总利息
+    var listId = prefix ? '#apply-modal-orders-list' : '#selected-orders-list';
+    var rows = document.querySelectorAll(listId + ' tr');
+    var totalAmount = 0;
+    var totalInterest = 0;
+    var totalDays = 0;
+    var orderCount = 0;
+    rows.forEach(function(row) {
+      var amountInput = row.querySelector('.finance-amount-input');
+      var termSelect = row.querySelector('.order-term-select');
+      if (!amountInput || !termSelect) return;
+      var val = parseFloat(amountInput.value.replace(/[¥,]/g, ''));
+      if (isNaN(val) || val <= 0) return;
+      var days = parseInt(termSelect.value);
+      totalAmount += val;
+      totalInterest += val * 0.055 * (days / 365);
+      totalDays = days;
+      orderCount++;
+    });
+
+    if (totalAmount <= 0) {
+      if (termEl) termEl.textContent = '--';
+      interestEl.childNodes[0].textContent = '¥0';
+      feeEl.childNodes[0].textContent = '¥0';
+      totalEl.textContent = '¥0';
+      if (aprEl) aprEl.textContent = '≈--';
+      return;
+    }
+
+    amountEl.textContent = '¥' + totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2});
+    if (termEl) termEl.textContent = orderCount > 1 ? '多笔' : (totalDays + '天');
+    interestEl.childNodes[0].textContent = '¥' + totalInterest.toLocaleString('en-US', {minimumFractionDigits: 2});
+    var fee = totalAmount * 0.005;
+    feeEl.childNodes[0].textContent = '¥' + fee.toLocaleString('en-US', {minimumFractionDigits: 2});
+    var total = totalInterest + fee;
+    totalEl.textContent = '¥' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+    if (aprEl) {
+      var avgDays = totalDays > 0 ? totalDays : 90;
+      var apr = (total / totalAmount) * (365 / avgDays) * 100;
+      aprEl.textContent = '≈' + apr.toFixed(1) + '%';
+    }
+  };
+
+  // 申请提额Modal - 重新计算融资总额
+  window.recalcApplyModalTotal = function() {
+    var inputs = document.querySelectorAll('#apply-modal-orders-list .finance-amount-input');
+    var total = 0;
+    inputs.forEach(function(input) {
+      var val = parseFloat(input.value.replace(/[¥,]/g, ''));
+      if (!isNaN(val)) total += val;
+    });
+    var amountInput = document.getElementById('apply-modal-amount');
+    var hint = document.getElementById('apply-modal-finance-hint');
+    if (total > 0) {
+      amountInput.value = '¥' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+      hint.textContent = '合计已选订单融资额度：¥' + total.toLocaleString();
+    } else {
+      amountInput.value = '';
+      hint.textContent = '合计已选订单融资额度：请选择订单';
+    }
+    // 更新预计利息（按订单期限计算）
+    var interestEl = document.getElementById('modal-order-interest');
+    if (interestEl) {
+      var termSelect = document.querySelector('#apply-modal-orders-list .order-term-select');
+      var days = termSelect ? parseInt(termSelect.value) : 90;
+      var interest = total > 0 ? Math.round(total * 0.055 * days / 365) : 0;
+      interestEl.textContent = '¥' + interest.toLocaleString();
+    }
+    // 更新费用试算器
+    var calcAmount = document.getElementById('modal-calc-amount');
+    if (calcAmount) calcAmount.textContent = total > 0 ? '¥' + total.toLocaleString('en-US', {minimumFractionDigits: 2}) : '¥0';
+    window.updateCostCalc('modal-');
+  };
+
+  // 申请提额Modal - 移除已选订单
+  window.removeApplyModalOrder = function(element) {
+    element.closest('tr').remove();
+    window.recalcApplyModalTotal();
+  };
+
+  window.switchTab = function(tabName) {
+    document.querySelectorAll('.finance-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.finance-tab-panel').forEach(function(c) { c.classList.remove('active'); });
+    var btn = document.querySelector('[data-tab="' + tabName + '"]');
+    if (btn) btn.classList.add('active');
+    var panel = document.getElementById('tab-' + tabName);
+    if (panel) panel.classList.add('active');
+  };
+
+  window.filterBills = function() {
+    var filter = document.getElementById('bill-status-filter').value;
+    var rows = document.querySelectorAll('#bill-list tr');
+    rows.forEach(function(row) {
+      var badge = row.querySelector('.bill-status');
+      if (!badge) return;
+      var status = '';
+      if (badge.classList.contains('pending')) status = 'pending';
+      else if (badge.classList.contains('paid')) status = 'paid';
+      else if (badge.classList.contains('overdue')) status = 'overdue';
+      row.style.display = (filter === 'all' || filter === status) ? '' : 'none';
+    });
+  };
+
+  window.filterFinanceStatus = function() {
+    var statusFilter = document.getElementById('finance-status-filter').value;
+    var sourceFilter = document.getElementById('finance-source-filter').value;
+    var table = document.querySelector('.credit-detail-card .data-table');
+    if (!table) return;
+    var rows = table.querySelectorAll('tbody tr');
+    rows.forEach(function(row) {
+      var statusCell = row.querySelector('.bill-status');
+      var sourceCell = row.cells[0]; // 项目来源是第一列
+      if (!statusCell || !sourceCell) return;
+      var statusText = statusCell.textContent.trim();
+      var sourceText = sourceCell.textContent.trim();
+      var statusMatch = (statusFilter === 'all' || statusText === statusFilter);
+      var sourceMatch = (sourceFilter === 'all' || sourceText === sourceFilter);
+      row.style.display = (statusMatch && sourceMatch) ? '' : 'none';
+    });
+  };
+
+  window.toggleAllBills = function(checkbox) {
+    var cbs = document.querySelectorAll('.bill-checkbox:not([disabled])');
+    cbs.forEach(function(cb) { cb.checked = checkbox.checked; });
+  };
+
+  window.repaySingle = function(billNo) {
+    var cbs = document.querySelectorAll('.bill-checkbox:not([disabled])');
+    cbs.forEach(function(cb) { cb.checked = (cb.getAttribute('data-bill') === billNo); });
+    openRepayModal();
+  };
+
+  window.openRepayModal = function() {
+    // 从表格复选框同步到弹窗
+    var tableCbs = document.querySelectorAll('.bill-checkbox:checked');
+    var checkedBills = [];
+    tableCbs.forEach(function(cb) { checkedBills.push(cb.getAttribute('data-bill')); });
+    var modalCbs = document.querySelectorAll('#repay-bill-list input[type="checkbox"]');
+    modalCbs.forEach(function(cb) { cb.checked = checkedBills.includes(cb.getAttribute('data-bill')); });
+    updateRepayTotal();
+    window.openModal('repay-modal');
+  };
+
+  window.updateRepayTotal = function() {
+    var total = 0;
+    var cbs = document.querySelectorAll('#repay-bill-list input[type="checkbox"]:checked');
+    cbs.forEach(function(cb) { total += parseFloat(cb.getAttribute('data-amount')); });
+    document.getElementById('repay-total').textContent = '¥' + total.toLocaleString('zh-CN', {minimumFractionDigits: 2});
+  };
+
+  (function() {
+    var sel = document.getElementById('repay-payment-method');
+    if (sel) {
+      sel.addEventListener('change', function() {
+        var info = document.getElementById('repay-bank-info');
+        if (this.value === 'bank_transfer') {
+          info.innerHTML = '<p>收款户名：恒丰银行股份有限公司上海浦东分行</p><p>开户银行：恒丰银行上海浦东分行</p><p>账号：6223 **** **** 8888</p><p style="margin-top:0.25rem;color:hsl(var(--warning));">附言请填写账单编号，转账后上传凭证</p>';
+        } else if (this.value === 'unionpay') {
+          info.innerHTML = '<p style="text-align:center;color:hsl(var(--muted-foreground));">确认后将跳转至银联在线支付完成付款</p>';
+        }
+      });
+    }
+  })();
+
+  window.confirmRepay = function() {
+    var total = document.getElementById('repay-total').textContent;
+    var method = document.getElementById('repay-payment-method');
+    var methodName = method ? method.selectedOptions[0].text : '对公转账';
+    var cbs = document.querySelectorAll('#repay-bill-list input[type="checkbox"]:checked');
+    if (cbs.length === 0) { alert('请至少选择一笔账单'); return; }
+    var billNos = [];
+    cbs.forEach(function(cb) { billNos.push(cb.getAttribute('data-bill')); });
+    if (confirm('确认还款？\n账单：' + billNos.join(', ') + '\n金额：' + total + '\n方式：' + methodName)) {
+      var repayNo = 'RP-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + String(Math.floor(Math.random()*9000+1000));
+      alert('还款申请已提交！\n还款单号：' + repayNo + '\n金额：' + total + '\n请按选择的支付方式完成付款，到账后额度自动释放。');
+      window.closeModal('repay-modal');
+    }
+  };
+
+  window.switchActivation = function(type) {
+    document.querySelectorAll('.activation-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.activation-panel').forEach(function(p) { p.classList.remove('active'); });
+    var btn = document.querySelector('[data-activation="' + type + '"]');
+    if (btn) btn.classList.add('active');
+    var panel = document.getElementById('activation-' + type);
+    if (panel) panel.classList.add('active');
+  };
+
+  // 在线评估准入
+  window.runAccessCheck = function() {
+    document.getElementById('threshold-intro').style.display = 'none';
+    document.getElementById('access-check-wrap').style.display = 'block';
+    // 默认展示准入通过场景
+    document.getElementById('access-pass').style.display = 'block';
+    document.getElementById('access-fail').style.display = 'none';
+    document.getElementById('access-warn').style.display = 'none';
+    document.getElementById('access-check-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // 准入场景切换（原型演示用）
+  window.switchAccessScenario = function(scenario) {
+    document.getElementById('access-pass').style.display = scenario === 'pass' ? 'block' : 'none';
+    document.getElementById('access-fail').style.display = scenario === 'fail' ? 'block' : 'none';
+    document.getElementById('access-warn').style.display = scenario === 'warn' ? 'block' : 'none';
+    // 切换场景时始终隐藏表单，由各场景的按钮触发显示
+    var formWrap = document.getElementById('unactivated-form-wrap');
+    formWrap.style.display = 'none';
+  };
+
+  // 显示申请表单
+  window.showApplyForm = function() {
+    // 隐藏准入通过/需补充材料模块
+    document.getElementById('access-pass').style.display = 'none';
+    document.getElementById('access-warn').style.display = 'none';
+    // 隐藏准入场景演示
+    document.getElementById('access-scenario-demo').style.display = 'none';
+    // 隐藏步骤4
+    document.getElementById('unactivated-step4-wrap').style.display = 'none';
+    // 更新步骤条：步骤1完成，步骤2激活
+    var steps = document.querySelectorAll('#unactivated-steps .apply-step');
+    if (steps.length >= 2) {
+      steps[0].className = 'apply-step done';
+      steps[1].className = 'apply-step active';
+    }
+    // 重置步骤3、4
+    if (steps.length >= 3) steps[2].className = 'apply-step';
+    if (steps.length >= 4) steps[3].className = 'apply-step';
+    // 显示申请表单
+    var formWrap = document.getElementById('unactivated-form-wrap');
+    formWrap.style.display = 'block';
+    formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // 返回上一步（评估门槛）
+  window.goBackToAccessCheck = function() {
+    // 隐藏表单和审核结果
+    document.getElementById('unactivated-form-wrap').style.display = 'none';
+    document.getElementById('unactivated-result-wrap').style.display = 'none';
+    document.getElementById('unactivated-step4-wrap').style.display = 'none';
+    // 恢复展示准入结果
+    var scenario = document.getElementById('access-scenario-select').value;
+    if (scenario === 'pass') {
+      document.getElementById('access-pass').style.display = 'block';
+    } else if (scenario === 'warn') {
+      document.getElementById('access-warn').style.display = 'block';
+    }
+    // 恢复准入场景演示
+    document.getElementById('access-scenario-demo').style.display = '';
+    // 重置步骤条：步骤1激活
+    var steps = document.querySelectorAll('#unactivated-steps .apply-step');
+    if (steps.length >= 2) {
+      steps[0].className = 'apply-step active';
+      steps[1].className = 'apply-step';
+    }
+    document.getElementById('access-check-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.submitUnactivatedApply = function() {
+    var svc = document.getElementById('agree-service-unactivated');
+    var crd = document.getElementById('agree-credit-unactivated');
+    var pld = document.getElementById('agree-pledge-unactivated');
+    var lck = document.getElementById('agree-lock-unactivated');
+    if (!svc.checked || !crd.checked || !pld.checked || !lck.checked) {
+      alert('请先阅读并同意所有协议（融资服务协议、征信授权书、应收账款质押协议、回款账户锁定协议）');
+      return;
+    }
+    // 展示综合融资成本明示表
+    window.showComplianceModal();
+  };
+
+  // 综合融资成本明示表 - 填充数据并展示（未开通页面使用）
+  window.showComplianceModal = function() {
+    // 从费用试算中读取数据
+    var principal = document.getElementById('calc-amount').textContent;
+    var interest = document.getElementById('calc-interest').textContent;
+    var fee = document.getElementById('calc-fee').textContent;
+    var apr = document.getElementById('calc-apr').textContent;
+    document.getElementById('compliance-principal').textContent = principal;
+    document.getElementById('compliance-interest').textContent = interest;
+    document.getElementById('compliance-fee').textContent = fee;
+    document.getElementById('compliance-apr').textContent = apr;
+    window._complianceCallback = null;
+    window.showComplianceCountdown();
+  };
+
+  // 综合融资成本明示表 - 倒计时逻辑（复用）
+  window.showComplianceCountdown = function() {
+    var seconds = 10;
+    var timerEl = document.getElementById('countdown-timer');
+    var btnEl = document.getElementById('compliance-confirm-btn');
+    var btnSpan = document.getElementById('countdown-btn');
+    timerEl.textContent = seconds;
+    btnSpan.textContent = seconds;
+    btnEl.disabled = true;
+    btnEl.textContent = '请阅读（' + seconds + 's）';
+    document.getElementById('compliance-countdown').innerHTML = '⏳ 请仔细阅读以上信息，' + seconds + ' 秒后可确认';
+    window.openModal('compliance-modal');
+    var interval = setInterval(function() {
+      seconds--;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        timerEl.textContent = '0';
+        btnSpan.textContent = '0';
+        btnEl.disabled = false;
+        btnEl.textContent = '我已阅读并确认';
+        document.getElementById('compliance-countdown').innerHTML = '✅ 阅读完毕，请点击确认提交';
+      } else {
+        timerEl.textContent = seconds;
+        btnSpan.textContent = seconds;
+        btnEl.textContent = '请阅读（' + seconds + 's）';
+        document.getElementById('compliance-countdown').innerHTML = '⏳ 请仔细阅读以上信息，' + seconds + ' 秒后可确认';
+      }
+    }, 1000);
+    var closeBtn = document.querySelector('#compliance-modal .modal-close');
+    closeBtn.onclick = function() {
+      clearInterval(interval);
+      window._complianceCallback = null;
+      window.closeModal('compliance-modal');
+    };
+  };
+
+  // 合规确认后提交
+  window.confirmCompliance = function() {
+    window.closeModal('compliance-modal');
+    if (window._complianceCallback) {
+      window._complianceCallback();
+      window._complianceCallback = null;
+      return;
+    }
+    var now = new Date();
+    var applyNo = 'APL-' + now.toISOString().slice(0,10).replace(/-/g,'') + '-' + String(Math.floor(Math.random()*9000+1000));
+    var timeStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('result-apply-no').textContent = applyNo;
+    document.getElementById('result-apply-type').textContent = '首次开通';
+    document.getElementById('result-apply-time').textContent = timeStr;
+    var steps = document.querySelectorAll('#unactivated-steps .apply-step');
+    if (steps.length >= 3) {
+      steps[0].className = 'apply-step done';
+      steps[1].className = 'apply-step done';
+      steps[2].className = 'apply-step active';
+    }
+    document.getElementById('unactivated-form-wrap').style.display = 'none';
+    document.getElementById('unactivated-result-wrap').style.display = '';
+  };
+
+  // 跳转到步骤4查看结果
+  window.goToStep4 = function(resultType) {
+    var now = new Date();
+    var timeStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    var applyNo = document.getElementById('result-apply-no').textContent;
+    // 隐藏步骤3
+    document.getElementById('unactivated-result-wrap').style.display = 'none';
+    // 显示步骤4
+    document.getElementById('unactivated-step4-wrap').style.display = '';
+    if (resultType === 'pass') {
+      document.getElementById('step4-pass').style.display = '';
+      document.getElementById('step4-fail').style.display = 'none';
+      document.getElementById('step4-apply-no').textContent = applyNo;
+      document.getElementById('step4-active-time').textContent = timeStr;
+    } else {
+      document.getElementById('step4-pass').style.display = 'none';
+      document.getElementById('step4-fail').style.display = '';
+      document.getElementById('step4-fail-apply-no').textContent = applyNo;
+      document.getElementById('step4-fail-time').textContent = timeStr;
+    }
+    // 更新步骤条：步骤1、2、3完成，步骤4激活
+    var steps = document.querySelectorAll('#unactivated-steps .apply-step');
+    if (steps.length >= 4) {
+      steps[0].className = 'apply-step done';
+      steps[1].className = 'apply-step done';
+      steps[2].className = 'apply-step done';
+      steps[3].className = 'apply-step active';
+    }
+    document.getElementById('unactivated-step4-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // 打开订单选择Modal
+  window.openOrderSelectModal = function() {
+    updateOrderSelectCount();
+    window.openModal('order-select-modal');
+  };
+
+  // 关闭订单选择Modal
+  window.closeOrderSelectModal = function() {
+    window.closeModal('order-select-modal');
+  };
+
+  // 全选订单
+  window.toggleSelectAllOrders = function(checkbox) {
+    var orderChecks = document.querySelectorAll('.order-check');
+    orderChecks.forEach(function(check) { check.checked = checkbox.checked; });
+    updateOrderSelectCount();
+  };
+
+  // 更新选中订单数量
+  window.updateOrderSelectCount = function() {
+    var checkedOrders = document.querySelectorAll('.order-check:checked');
+    var countEl = document.getElementById('order-select-count');
+    if (countEl) countEl.textContent = '已选 ' + checkedOrders.length + ' 个订单';
+  };
+
+  // 确认选择订单
+  window.confirmOrderSelect = function() {
+    var selectedOrders = document.querySelectorAll('.order-check:checked');
+    var ordersList = document.getElementById('selected-orders-list');
+    var totalFinance = 0;
+    var rowsHtml = '';
+    selectedOrders.forEach(function(order) {
+      var source = order.getAttribute('data-source');
+      var orderNo = order.getAttribute('data-order-no');
+      var amount = order.getAttribute('data-amount');
+      var status = order.getAttribute('data-status');
+      var finance = order.getAttribute('data-finance');
+      totalFinance += parseInt(finance);
+      // 预计利息 = 融资金额 × 5.5% × 90天 / 365（默认90天）
+      var interest = Math.round(parseInt(finance) * 0.055 * 90 / 365);
+      rowsHtml += '<tr>' +
+        '<td>' + source + '</td>' +
+        '<td>' + orderNo + '</td>' +
+        '<td class="amount">¥' + parseInt(amount).toLocaleString() + '</td>' +
+        '<td><span class="bill-status paid">' + status + '</span></td>' +
+        '<td><input type="text" class="finance-amount-input" value="" placeholder="¥' + parseInt(finance).toLocaleString() + ' (70%)" style="width:100px;padding:0.25rem 0.5rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.75rem;text-align:right;outline:none;" onchange="recalcFinanceTotal()" /></td>' +
+        '<td><select class="order-term-select" onchange="recalcFinanceTotal()" style="width:72px;height:1.75rem;border:1px solid hsl(var(--border));border-radius:var(--radius-sm);font-size:0.6875rem;padding:0 0.25rem;background:#fff;">' +
+        '<option value="90" selected>90天</option><option value="120">120天</option><option value="180">180天</option><option value="240">240天</option><option value="360">360天</option></select></td>' +
+        '<td style="font-size:0.75rem;">5.5%</td>' +
+        '<td class="amount" style="font-size:0.75rem;">¥' + interest.toLocaleString() + '</td>' +
+        '<td><span style="cursor:pointer;color:hsl(var(--muted-foreground));" onclick="removeSelectedOrder(this)" title="移除">×</span></td>' +
+        '</tr>';
+    });
+    ordersList.innerHTML = '<table class="finance-table" style="margin-bottom:0;">' +
+      '<thead><tr>' +
+      '<th>项目来源</th><th>项目单号</th><th>订单金额</th><th>订单状态</th><th>建议融资</th><th>融资期限</th><th>年化利率</th><th>预计利息</th><th style="width:50px;">操作</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>';
+    // 自动计算并反填申请融资金额
+    var financeInput = document.getElementById('finance-amount-input');
+    var financeHint = document.querySelector('.form-hint');
+    if (financeInput) {
+      financeInput.value = '¥' + totalFinance.toLocaleString();
+    }
+    if (financeHint) {
+      financeHint.textContent = '合计已选订单融资额度：¥' + totalFinance.toLocaleString();
+    }
+    closeOrderSelectModal();
+  };
+
+  // 移除已选订单
+  window.removeSelectedOrder = function(element) {
+    var row = element.closest('tr');
+    var orderNo = row.querySelector('td:nth-child(2)').textContent.trim();
+    var orderCheckbox = document.querySelector('.order-check[data-order-no="' + orderNo + '"]');
+    if (orderCheckbox) { orderCheckbox.checked = false; updateOrderSelectCount(); }
+    row.remove();
+    recalcFinanceTotal();
+  };
+
+  // 重新计算融资金额总和
+  window.recalcFinanceTotal = function() {
+    var totalFinance = 0;
+    var rows = document.querySelectorAll('#selected-orders-list tr');
+    rows.forEach(function(row) {
+      var amountInput = row.querySelector('.finance-amount-input');
+      var termSelect = row.querySelector('.order-term-select');
+      if (!amountInput) return;
+      var val = parseFloat(amountInput.value.replace(/[¥,]/g, ''));
+      if (isNaN(val)) return;
+      totalFinance += val;
+      // 更新该行的预计利息
+      var interestCells = row.querySelectorAll('td.amount');
+      var interestCell = interestCells.length >= 2 ? interestCells[1] : null;
+      if (interestCell && termSelect) {
+        var days = parseInt(termSelect.value);
+        var interest = Math.round(val * 0.055 * days / 365);
+        interestCell.textContent = '¥' + interest.toLocaleString();
+      }
+    });
+    var financeInput = document.getElementById('finance-amount-input');
+    var financeHint = document.querySelector('#selected-orders-list').parentElement.nextElementSibling.querySelector('.form-hint');
+    if (financeInput) {
+      financeInput.value = totalFinance > 0 ? '¥' + totalFinance.toLocaleString() : '';
+    }
+    // 更新费用试算器
+    var calcAmount = document.getElementById('calc-amount');
+    if (calcAmount) calcAmount.textContent = totalFinance > 0 ? '¥' + totalFinance.toLocaleString('en-US', {minimumFractionDigits: 2}) : '¥0';
+    window.updateCostCalc('');
+  };
+
+  // 绑定订单选择Modal中的checkbox变化事件
+  (function() {
+    var orderChecks = document.querySelectorAll('.order-check');
+    orderChecks.forEach(function(check) {
+      check.addEventListener('change', function() { updateOrderSelectCount(); });
+    });
+  })();
+
+  // 页面初始化：触发费用试算器初始计算
+  (function() {
+    var calcAmount = document.getElementById('calc-amount');
+    if (calcAmount) {
+      // 设置初始金额并触发计算
+      var firstInput = document.querySelector('#selected-orders-list .finance-amount-input');
+      if (firstInput) firstInput.value = '350000';
+      window.recalcFinanceTotal();
+    }
+  })();
+})();
+</script>
+</body>
+</html>

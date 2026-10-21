@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星苹台供应链商城</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.entry-hero {
+  text-align: center;
+  padding: 2.5rem 1rem 1.5rem;
+}
+.entry-hero h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: hsl(var(--primary));
+  letter-spacing: 0.04em;
+}
+.entry-hero .subtitle {
+  font-size: var(--text-lg);
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.5rem;
+}
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.entry-card {
+  background: #fff;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: all var(--transition-base);
+  cursor: default;
+}
+.entry-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: hsl(var(--primary));
+}
+.entry-card .card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  background: hsl(var(--primary-muted));
+  color: hsl(var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+}
+.entry-card .card-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.375rem;
+}
+.entry-card .card-desc {
+  font-size: var(--text-xs);
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+.entry-card .card-link {
+  font-size: var(--text-xs);
+  color: hsl(var(--primary));
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.entry-card .card-link:hover { text-decoration: underline; }
+.entry-section-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid hsl(var(--primary));
+}
+.entry-section { margin-bottom: 1.5rem; }
+.entry-card.admin-card {
+  background: linear-gradient(135deg, hsl(var(--primary-muted)), #fff);
+  border-color: hsl(var(--primary));
+  border-width: 2px;
+}
+.entry-card.admin-card .card-icon {
+  background: hsl(var(--primary));
+  color: #fff;
+}
+@media (max-width: 768px) {
+  .entry-grid { grid-template-columns: repeat(2, 1fr); }
+  .entry-hero h1 { font-size: 1.5rem; }
+}
+@media (max-width: 480px) {
+  .entry-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<script>var WEBSHOP_PAGE = 'home';</script>
+<div id="header-container"></div>
+<div id="nav-bar-container"></div>
+<div class="main">
+  <div class="entry-hero">
+    <h1>星苹台供应链商城</h1>
+    <p class="subtitle">企业采购一站式解决方案</p>
+  </div>
+
+  <div class="entry-section">
+    <div class="entry-section-title">商城服务</div>
+    <div class="entry-grid">
+      <div class="entry-card">
+        <div class="card-icon">🏠</div>
+        <div class="card-title">商城首页</div>
+        <div class="card-desc">浏览全品类商品，查看新品上架和热销排行</div>
+        <a class="card-link" href="webshop-home.html">进入商城 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">📋</div>
+        <div class="card-title">协议专区</div>
+        <div class="card-desc">查看企业专属协议价商品，享受最优采购价格</div>
+        <a class="card-link" href="webshop-agreement-zone.html">查看协议价 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">📦</div>
+        <div class="card-title">批量下单</div>
+        <div class="card-desc">支持Excel模板导入，快速批量下单提高效率</div>
+        <a class="card-link" href="webshop-batch-order.html">批量下单 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">⚖️</div>
+        <div class="card-title">商品比价</div>
+        <div class="card-desc">多供应商价格对比，智能推荐最优采购方案</div>
+        <a class="card-link" href="webshop-price-comparison.html">开始比价 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry-section">
+    <div class="entry-section-title">采购管理</div>
+    <div class="entry-grid">
+      <div class="entry-card">
+        <div class="card-icon">💼</div>
+        <div class="card-title">企业工作台</div>
+        <div class="card-desc">一站式采购管理面板，实时掌握采购动态</div>
+        <a class="card-link" href="webshop-workbench.html">进入工作台 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">📝</div>
+        <div class="card-title">采购清单</div>
+        <div class="card-desc">管理采购需求清单，跟踪采购进度</div>
+        <a class="card-link" href="webshop-procurement-list.html">管理清单 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">💰</div>
+        <div class="card-title">预算管控</div>
+        <div class="card-desc">部门预算设定与监控，防止超支采购</div>
+        <a class="card-link" href="webshop-budget.html">预算管理 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">✅</div>
+        <div class="card-title">审批管理</div>
+        <div class="card-desc">采购订单审批流程，支持多级审批</div>
+        <a class="card-link" href="webshop-approval.html">审批管理 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry-section">
+    <div class="entry-section-title">企业服务</div>
+    <div class="entry-grid">
+      <div class="entry-card">
+        <div class="card-icon">🏢</div>
+        <div class="card-title">企业认证</div>
+        <div class="card-desc">企业资质认证，开通专属采购权限</div>
+        <a class="card-link" href="webshop-enterprise-register.html">企业认证 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">👥</div>
+        <div class="card-title">组织管理</div>
+        <div class="card-desc">管理企业组织架构和部门设置</div>
+        <a class="card-link" href="webshop-org-management.html">组织管理 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">🔑</div>
+        <div class="card-title">角色权限</div>
+        <div class="card-desc">设置员工角色和采购操作权限</div>
+        <a class="card-link" href="webshop-role-permission.html">权限管理 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">📄</div>
+        <div class="card-title">合同管理</div>
+        <div class="card-desc">采购合同签署、归档与查询</div>
+        <a class="card-link" href="webshop-contract.html">合同管理 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry-section">
+    <div class="entry-section-title">结算财务</div>
+    <div class="entry-grid">
+      <div class="entry-card">
+        <div class="card-icon">💳</div>
+        <div class="card-title">金融中心</div>
+        <div class="card-desc">星采账期额度管理、账单查询、在线还款与额度申请</div>
+        <a class="card-link" href="webshop-finance.html">金融中心 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">🧾</div>
+        <div class="card-title">对账管理</div>
+        <div class="card-desc">月度采购对账，账期结算管理</div>
+        <a class="card-link" href="webshop-reconciliation.html">对账管理 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">🧾</div>
+        <div class="card-title">发票管理</div>
+        <div class="card-desc">电子发票申请、查看与下载</div>
+        <a class="card-link" href="webshop-invoice.html">发票管理 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">📊</div>
+        <div class="card-title">采购分析报告</div>
+        <div class="card-desc">采购数据分析，可视化报表展示</div>
+        <a class="card-link" href="webshop-analysis-report.html">查看报告 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry-section">
+    <div class="entry-section-title">数据工具</div>
+    <div class="entry-grid">
+      <div class="entry-card">
+        <div class="card-icon">📈</div>
+        <div class="card-title">数据看板</div>
+        <div class="card-desc">采购数据可视化，实时监控关键指标</div>
+        <a class="card-link" href="webshop-dashboard.html">数据看板 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">🔍</div>
+        <div class="card-title">商品对比</div>
+        <div class="card-desc">多商品参数对比，辅助采购决策</div>
+        <a class="card-link" href="webshop-product-compare.html">商品对比 →</a>
+      </div>
+      <div class="entry-card">
+        <div class="card-icon">🔔</div>
+        <div class="card-title">消息通知</div>
+        <div class="card-desc">订单状态、审批进度实时通知</div>
+        <a class="card-link" href="webshop-notification.html">查看通知 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="entry-section">
+    <div class="entry-section-title">客户服务</div>
+    <div class="entry-grid">
+      <div class="entry-card">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">AI智能客服</div>
+        <div class="card-desc">7×24小时智能问答，快速解决采购疑问</div>
+        <a class="card-link" href="javascript:void(0)" onclick="document.getElementById('cs-chat-modal').classList.add('active')">立即咨询 →</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="footer-container"></div>
+<div id="mobile-nav-container"></div>
+<div id="cs-float-container"></div>
+<div id="cs-chat-modal-container"></div>
+<div id="inquiry-float-container"></div>
+<div id="inquiry-modal-container"></div>
+<script src="common.js"></script>
+</body>
+</html>
