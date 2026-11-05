@@ -58,7 +58,7 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
   function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
 
   var DEFAULT_CFG = { weights:{price:45,lead:20,pay:15,rating:15,moq:5}, fundRate:0.06, taxRate:0.13, freightMode:'按件' };
-  var DEFAULT_APPROVAL = { threshold:5000, approver1:'采购主管（张三）', approver2:'副总（王五）', over50000:'总经理（赵六）' };
+  var DEFAULT_APPROVAL = { threshold:5000, approver1:'采购主管（张三）', approver2:'副总（孙七）', over50000:'总经理（赵六）' };
   var DEFAULT_ORDERS = [
     { id:'PO-2026-0042', code:'PAPER-A4-80G', name:'A4复印纸 80g', supplier:'北京恒久办公用品有限公司', supplier_id:'SUP-001', channel_id:'CH-SELF', qty:100, unit:'箱', price:118, pay:'30天', status:'待处理', date:'2026-10-29', mall_type:'星苹台商城', mall_order_id:null },
     { id:'PO-2026-0038', code:'TONER-CC388A', name:'硒鼓 惠普88A', supplier:'上海晨光科力普办公用品有限公司', supplier_id:'SUP-002', channel_id:'CH-SELF', qty:50, unit:'支', price:395, pay:'现款', status:'待支付', date:'2026-10-22', mall_type:'星苹台商城', mall_order_id:'XPT-2026102201' },
@@ -230,7 +230,7 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
       }
     });
     html += '</div>' +
-      '<div class="side-user" onclick="MPJ.go(\'profile\')"><div class="avatar">武</div><div class="nm">武昀汐<div class="rl">采购专员</div></div></div>';
+      '<div class="side-user" onclick="MPJ.go(\'profile\')"><div class="avatar">王</div><div class="nm">王五<div class="rl">采购专员</div></div></div>';
     return html;
   }
   function toggleGroup(btn, label){
@@ -250,7 +250,7 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
       (crumb ? '<span class="crumb">' + crumb + '</span>' : '') +
       '<span class="spacer"></span>' +
       '<a class="icon-btn" title="消息中心" href="messages.html">✉<span class="bdg">' + unread + '</span></a>' +
-      '<a class="user-chip" href="profile.html"><div class="avatar">武</div><b>武昀汐</b></a>' +
+      '<a class="user-chip" href="profile.html"><div class="avatar">王</div><b>王五</b></a>' +
       '<button class="btn sm" onclick="MPJ.logout()">退出</button>';
   }
   function injectTopbar(){ el('topbar').innerHTML = buildTopbar(); }
@@ -291,7 +291,7 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
     }).join('');
 
     el('content').innerHTML =
-      '<div class="page-head"><h1 class="page-title-lg">工作台</h1><p class="page-desc">你好，武昀汐。今天是 ' + today + '，以下是你的采购比价概览。</p></div>' +
+      '<div class="page-head"><h1 class="page-title-lg">工作台</h1><p class="page-desc">你好，王五。今天是 ' + today + '，以下是你的采购比价概览。</p></div>' +
       '<div class="stat-grid">' +
         '<div class="stat"><div class="ic ic-blue">▤</div><div><div class="v">' + products.length + '</div><div class="l">商品 SKU（办公耗材样板）</div></div></div>' +
         '<div class="stat"><div class="ic ic-purple">◉</div><div><div class="v">' + suppliers.length + '</div><div class="l">供应商（覆盖 ' + channels.length + ' 渠道）</div></div></div>' +
@@ -1244,7 +1244,7 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
         '<div class="field-row">'+
           '<div class="fld"><label>触发审批金额阈值</label><div><input type="number" value="'+a.threshold+'" step="500" min="0" id="apr-threshold" oninput="MPJ.setApprovalThreshold(this.value)"><span class="unit">元</span></div></div>'+
           '<div class="fld"><label>一级审批人</label><div><select id="apr-a1" onchange="MPJ.setApprover1(this.value)"><option'+(a.approver1==='采购主管（张三）'?' selected':'')+'>采购主管（张三）</option><option'+(a.approver1==='财务负责人（李四）'?' selected':'')+'>财务负责人（李四）</option></select></div></div>'+
-          '<div class="fld"><label>超过 50000 元加签</label><div><select id="apr-a2" onchange="MPJ.setApprover2(this.value)"><option'+(a.approver2==='副总（王五）'?' selected':'')+'>副总（王五）</option><option'+(a.approver2==='总经理（赵六）'?' selected':'')+'>总经理（赵六）</option></select></div></div>'+
+          '<div class="fld"><label>超过 50000 元加签</label><div><select id="apr-a2" onchange="MPJ.setApprover2(this.value)"><option'+(a.approver2==='副总（孙七）'?' selected':'')+'>副总（孙七）</option><option'+(a.approver2==='总经理（赵六）'?' selected':'')+'>总经理（赵六）</option></select></div></div>'+
         '</div>'+
         '<div style="font-size:12px;color:var(--ink-3);margin-top:12px">当前阈值 <b style="color:var(--brand)">¥'+a.threshold+'</b>：PO 金额超过该值自动进入审批流，未超过则直接采购下单（跳转商城）。</div>'+
       '</div>'+
@@ -1257,10 +1257,10 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
 
   /* ---- 用户管理 ---- */
   var USERS = [
-    { name:'武昀汐', account:'wuyunxi', role:'采购员', dept:'企业采购部', email:'wuyunxi@example.com', status:'启用', date:'2026-09-01' },
+    { name:'王五', account:'wangwu', role:'采购员', dept:'企业采购部', email:'wangwu@example.com', status:'启用', date:'2026-09-01' },
     { name:'张三', account:'zhangsan', role:'审批人', dept:'企业采购部', email:'zhang3@example.com', status:'启用', date:'2026-09-02' },
     { name:'李四', account:'lisi', role:'审批人', dept:'财务部', email:'lisi@example.com', status:'启用', date:'2026-09-02' },
-    { name:'王五', account:'wangwu', role:'租户管理员', dept:'数字化运营部', email:'wangwu@example.com', status:'启用', date:'2026-08-20' },
+    { name:'孙七', account:'sunqi', role:'租户管理员', dept:'数字化运营部', email:'sunqi@example.com', status:'启用', date:'2026-08-20' },
     { name:'赵六', account:'zhaoliu', role:'只读审计', dept:'风控部', email:'zhaoliu@example.com', status:'停用', date:'2026-08-20' }
   ];
   pages.users = function(){
@@ -1330,12 +1330,12 @@ window.DATA = {"products":[{"sku_code":"PAPER-A4-80G","gtin":"6901028033127","na
       '<div class="page-head"><h1 class="page-title-lg">个人中心</h1><p class="page-desc">账号信息与偏好设置。</p></div>'+
       '<div class="card" style="max-width:560px">'+
         '<div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">'+
-          '<div style="width:60px;height:60px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700">武</div>'+
-          '<div><div style="font-size:18px;font-weight:700">武昀汐</div><div style="color:var(--ink-3);font-size:13px">采购专员 · 供应链采购岗</div></div>'+
+          '<div style="width:60px;height:60px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700">王</div>'+
+          '<div><div style="font-size:18px;font-weight:700">王五</div><div style="color:var(--ink-3);font-size:13px">采购专员 · 供应链采购岗</div></div>'+
         '</div>'+
-        '<div class="kv"><span class="k">账号</span><span>wuyunxi</span>'+
+        '<div class="kv"><span class="k">账号</span><span>wangwu</span>'+
         '<span class="k">所属组织</span><span>企业采购部</span>'+
-        '<span class="k">邮箱</span><span>wuyunxi@example.com</span>'+
+        '<span class="k">邮箱</span><span>wangwu@example.com</span>'+
         '<span class="k">角色</span><span>采购员（内置角色 · 可发起比价 / 生成下发 PO）</span>'+
         '<span class="k">数据权限</span><span>办公耗材全类目</span>'+
       '</div></div>'+
