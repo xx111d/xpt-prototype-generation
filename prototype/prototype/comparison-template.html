@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比价口径模板 · AI智采平台</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="if(event.target===this)MPJ.closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+<div id="toast"><div class="box" id="toast-box"></div></div>
+<script>window.PAGE = 'template';</script>
+<script src="common.js"></script>
+<script>MPJ.pages.template();</script>
+</body>
+</html>
